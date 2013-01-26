@@ -10,11 +10,11 @@ void print_word_size(){
 }
 
 void float32_print(Float32 p){
-    printf("\n[ Value    ]: %f\n", p.fword);
-    printf("[ Hex Val  ]: %08x\n", p.lword);
-    printf("[ Sign     ]: %u\n", (int)p.My.Sign);
-    printf("[ Exponent ]: %u\n", (int)p.My.Exponent);
-    printf("[ Mantissa ]: %08x\n\n", (int)p.My.Mantissa);
+    printf("[ Value    ]: %f\n", p.fword);
+    debug("[ Hex Val  ]: %08x\n", p.lword);
+    debug("[ Sign     ]: %u\n", (int)p.My.Sign);
+    debug("[ Exponent ]: %u\n", (int)p.My.Exponent);
+    debug("[ Mantissa ]: %08x\n\n", (int)p.My.Mantissa);
 }
 
 uint8_t float32_isZero(Float32 p){
@@ -47,29 +47,29 @@ Float32 float32_multiply(Float32 a, Float32 b){
     Am.byte[2] |= 0x80;
     Bm.byte[2] |= 0x80;
 
-    printf("A > %08x\n", Am.lword);
-    printf("B > %08x\n", Bm.lword);
+    debug("A > %08x\n", Am.lword);
+    debug("B > %08x\n", Bm.lword);
 
     // Calculate Mantissa
     Cr.lword = Am.dbyte[0] * Bm.dbyte[0];
-    printf("1er Mult = %08x\n", Cr.lword);
+    debug("1er Mult = %08x\n", Cr.lword);
     Cr.dbyte[0] = Cr.dbyte[1];
     Cr.dbyte[1] = 0;
-    printf("Shift 16 = %08x\n", Cr.lword);
+    debug("Shift 16 = %08x\n", Cr.lword);
 
     Cr.lword += Am.dbyte[0] * Bm.byte[2];
-    printf("2da Mult = %08x\n", Cr.lword);
+    debug("2da Mult = %08x\n", Cr.lword);
 
     Cr.lword += Bm.dbyte[0] * Am.byte[2];
-    printf("3er Mult = %08x\n", Cr.lword);
+    debug("3er Mult = %08x\n", Cr.lword);
 
     Cr.dbyte[1] += Am.byte[2] * Bm.byte[2];
-    printf("4ta Mult = %08x\n", Cr.lword);
+    debug("4ta Mult = %08x\n", Cr.lword);
 
     for(index = 0; index < 3; index++)
         Cr.byte[index] = Cr.byte[index + 1];
     Cr.byte[3] = 0;
-    printf("Shift 8  = %08x\n", Cr.lword);
+    debug("Shift 8  = %08x\n", Cr.lword);
 
     // Normalize (if needed)
     if(Cr.byte[2] & 0x80){
@@ -78,11 +78,11 @@ Float32 float32_multiply(Float32 a, Float32 b){
     else{
         printf("Ajuste de mantiza!\n");
         Cr.byte[2] <<= 1;
-        printf("Shift 1  = %08x\n", Cr.lword);
+        debug("Shift 1  = %08x\n", Cr.lword);
         Cr.byte[2] = (Cr.byte[1] & 0x80) ? (Cr.byte[2] | 0x01) : (Cr.byte[2] & 0xFE);
-        printf("Acarreo  = %08x\n", Cr.lword);
+        debug("Acarreo  = %08x\n", Cr.lword);
         Cr.dbyte[0] <<= 1;
-        printf("Ultimo   = %08x\n", Cr.lword);
+        debug("Ultimo   = %08x\n", Cr.lword);
         Cr.My.Exponent = 0;
     }
 

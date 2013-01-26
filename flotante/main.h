@@ -1,6 +1,14 @@
 #ifndef FLOAT_LIB
 #define FLOAT_LIB
 
+#define DEBUG
+#ifdef DEBUG
+    #define debug printf
+#else
+    #define debug( ... ) asm("nop")
+#endif
+
+
 // your declarations here
 enum{
     FALSE,
