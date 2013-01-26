@@ -29,16 +29,18 @@ Float32 float32_multiply(Float32 a, Float32 b){
     uint8_t index;
     Float32 Am, Bm, Cr;
 
-    // Test for Zero
-    if(float32_isZero(a) || float32_isZero(b))
-        return Cr;
-
+    Cr.lword = 0;
     float32_print(a);
     float32_print(b);
 
+    // Test for Zero
+    if(float32_isZero(a) || float32_isZero(b)){
+        debug("Multiply by Zero\n");
+        return Cr;
+    }
+
     Am.lword = a.My.Mantissa;
     Bm.lword = b.My.Mantissa;
-    Cr.lword = 0;
 
     // Calculate Sign
     Cr.My.Sign = a.My.Sign ^ b.My.Sign;
