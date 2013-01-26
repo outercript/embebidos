@@ -11,3 +11,11 @@
 *.lai
 *.la
 *.a
+
+# Coverage files
+*.gcno
+*.gcda
+*.info
+
+# Binary files
+*.exe
