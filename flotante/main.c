@@ -107,8 +107,8 @@ int main(int argc, char *argv[]) {
     //
 
     Float32 T1, T2, T3;
-    T1.lword = strtof(argv[1],NULL);
-    T2.lword = strtof(argv[2],NULL);
+    T1.fword = strtof(argv[1], NULL);
+    T2.fword = strtof(argv[2], NULL);
 
     T3 = float32_multiply(T1, T2);
     float32_print(T3);
