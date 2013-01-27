@@ -42,9 +42,6 @@ Float32 float32_multiply(Float32 a, Float32 b){
     Am.lword = a.My.Mantissa;
     Bm.lword = b.My.Mantissa;
 
-    // Calculate Sign
-    Cr.My.Sign = a.My.Sign ^ b.My.Sign;
-
     // Insert Implicit Ones
     Am.byte[2] |= 0x80;
     Bm.byte[2] |= 0x80;
@@ -88,8 +85,10 @@ Float32 float32_multiply(Float32 a, Float32 b){
         Cr.My.Exponent = 0;
     }
 
-    // Calculate Exponent
+    // Calculate Exponent and Sign
     Cr.My.Exponent += (uint16_t)a.My.Exponent + b.My.Exponent - 127;
+    Cr.My.Sign = (a.My.Sign ^ b.My.Sign);
+
     return Cr;
 }
 
