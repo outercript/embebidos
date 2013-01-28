@@ -1,7 +1,9 @@
 #ifndef FLOAT_LIB
 #define FLOAT_LIB
 
-#define DEBUG
+//#define STANDALONE
+//#define DEBUG
+
 #ifdef DEBUG
     #define debug printf
 #else
@@ -9,7 +11,7 @@
 #endif
 
 
-// your declarations here
+// Custom data structures
 enum{
     FALSE,
     TRUE

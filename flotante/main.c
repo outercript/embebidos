@@ -95,17 +95,16 @@ Float32 float32_multiply(Float32 a, Float32 b){
 
 int usage(){
     printf("Invalid Usage!! flotante.exe num1 num2\n");
-    exit(1);
+    return 1;
 }
 
+#ifdef STANDALONE
 int main(int argc, char *argv[]) {
     printf("Argumentos : %u\n", argc);
 
     // Parse Cmdline Arguments
     if(argc != 3)
 		usage();
-
-    //
 
     Float32 T1, T2, T3;
     T1.fword = strtof(argv[1], NULL);
@@ -116,3 +115,4 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
+#endif
