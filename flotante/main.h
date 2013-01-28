@@ -27,4 +27,13 @@ typedef union {
     } My;
 }Float32;
 
+
+// Function Prototypes
+void print_word_size();
+void float32_print(Float32 p);
+uint8_t float32_isZero(Float32 p);
+Float32 float32_multiply(Float32 a, Float32 b);
+
+int usage();
+
 #endif
