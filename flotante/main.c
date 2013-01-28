@@ -10,8 +10,8 @@ void print_word_size(){
 }
 
 void float32_print(Float32 p){
-    printf("[ Value    ]: %f\n", p.fword);
-    debug("[ Hex Val  ]: %08x\n", p.lword);
+    printf("[ Value    ]: %.8f\n", p.fword);
+    debug("[ Hex Val  ]: 0x%08X\n", p.lword);
     debug("[ Sign     ]: %u\n", (int)p.My.Sign);
     debug("[ Exponent ]: %u\n", (int)p.My.Exponent);
     debug("[ Mantissa ]: %08x\n\n", (int)p.My.Mantissa);
@@ -20,7 +20,6 @@ void float32_print(Float32 p){
 uint8_t float32_isZero(Float32 p){
     if(p.My.Exponent == 0 && p.My.Mantissa == 0)
        return TRUE;
-
     else
         return FALSE;
 }
@@ -30,8 +29,10 @@ Float32 float32_multiply(Float32 a, Float32 b){
     Float32 Am, Bm, Cr;
 
     Cr.lword = 0;
-    float32_print(a);
-    float32_print(b);
+    #ifdef DEBUG
+        float32_print(a);
+        float32_print(b);
+    #endif
 
     // Test for Zero
     if(float32_isZero(a) || float32_isZero(b)){
@@ -75,7 +76,7 @@ Float32 float32_multiply(Float32 a, Float32 b){
         Cr.My.Exponent = 1;
     }
     else{
-        printf("Ajuste de mantiza!\n");
+        debug("Ajuste de mantiza!\n");
         Cr.byte[2] <<= 1;
         debug("Shift 1  = %08x\n", Cr.lword);
         Cr.byte[2] = (Cr.byte[1] & 0x80) ? (Cr.byte[2] | 0x01) : (Cr.byte[2] & 0xFE);
