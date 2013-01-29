@@ -145,9 +145,7 @@ Float32 float32_multiply(Float32 a, Float32 b){
     Cr.dbyte[1] += Am.byte[2] * Bm.byte[2];
     debug("4ta Mult = %08x\n", Cr.lword);
 
-    for(index = 0; index < 3; index++)
-        Cr.byte[index] = Cr.byte[index + 1];
-    Cr.byte[3] = 0;
+    Cr = float32_shiftL8(Cr);
     debug("Shift 8  = %08x\n", Cr.lword);
 
     // Normalize (if needed)
