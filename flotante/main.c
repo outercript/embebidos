@@ -25,7 +25,28 @@ uint8_t float32_isZero(Float32 p){
 }
 
 
-Float32 float32_addition_substraction(Float32 x, Float32 y , uint8_t operation){
+/*********   Shift Left/Right 8 bits   **********/
+
+Float32 float32_shiftL8(Float32 x){
+    x.byte[3] = x.byte[2];
+    x.byte[2] = x.byte[1];
+    x.byte[1] = x.byte[0];
+    x.byte[0] = 0;
+    return x;
+}
+
+Float32 float32_shiftR8(Float32 x){
+    x.byte[0] = x.byte[1];
+    x.byte[1] = x.byte[2];
+    x.byte[2] = x.byte[3];
+    x.byte[3] = 0;
+    return x;
+}
+
+
+/*********   Addition/Substraction Algorithm    ************/
+
+Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
     Float32 tmp_x, tmp_y, tmp_r ,result;
 
     // for the uint8_t operation selector 0 means adding, 1 means substracting
@@ -79,6 +100,8 @@ Float32 float32_addition_substraction(Float32 x, Float32 y , uint8_t operation){
     return result;
 }
 
+
+/*********   Multiplication Algorithm    ************/
 
 Float32 float32_multiply(Float32 a, Float32 b){
     uint8_t index;
@@ -144,6 +167,62 @@ Float32 float32_multiply(Float32 a, Float32 b){
 
     return Cr;
 }
+
+
+/*********   Division Algorithm    ************/
+
+Float32 float32_divide(Float32 x, Float32 y ){
+    //Performs the x/y float division
+    Float32 dividend, divisor, cocient;
+    uint16_t tmp_exp;
+    uint8_t  i;
+
+    // Make Implicit 1, Explicit!
+    dividend.lword = x.My.Mantissa;
+    divisor.lword  = y.My.Mantissa;
+    dividend.byte[2] |= 0x80;
+    divisor.byte[2]  |= 0x80;
+    cocient.lword  = 0;
+
+    //Calculate Exponent
+    tmp_exp = 126 + x.My.Exponent - y.My.Exponent;
+
+    //Perform Division
+    if(dividend.lword == divisor.lword){
+        debug("[ SPECIAL ] Same Mantissa: %06x\n", divisor.lword);
+        ++tmp_exp;
+        cocient.byte[2] = 0x80;
+    }
+    else{
+        for(i=3 ; i > 0 ; --i){
+            dividend = float32_shiftL8(dividend);
+            //Weak point here maybe
+            cocient.lword  = float32_shiftL8(cocient).lword |(dividend.lword/divisor.lword);
+            dividend.lword = dividend.lword % divisor.lword;
+            if(dividend.lword == 0) //The job is done =)
+                break;
+        }
+    }
+    //Adjust Exponent and Mantissa
+    while((cocient.byte[2]&0x80) == 0 || cocient.byte[3] > 0){
+        if(cocient.byte[3] > 0){
+            debug("[ ADJUST ] Cocient: Shift Right\n");
+            ++tmp_exp;
+            cocient.lword >>= 1;
+        }
+        else{
+            debug("[ ADJUST ] Cocient: Shift left\n");
+            --tmp_exp;
+            cocient.lword <<= 1;
+        }
+    }
+
+    //Place It All Together
+    cocient.My.Exponent = tmp_exp;
+    cocient.My.Sign     = x.My.Sign ^ y.My.Sign;
+    return cocient;
+}
+
 
 int usage(){
     printf("Invalid Usage!! flotante.exe num1 num2\n");
