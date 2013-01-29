@@ -24,6 +24,62 @@ uint8_t float32_isZero(Float32 p){
         return FALSE;
 }
 
+
+Float32 float32_addition_substraction(Float32 x, Float32 y , uint8_t operation){
+    Float32 tmp_x, tmp_y, tmp_r ,result;
+
+    // for the uint8_t operation selector 0 means adding, 1 means substracting
+    y.My.Sign     = (operation > 0) ^ y.My.Sign;
+
+    tmp_x.lword = x.My.Mantissa;
+    tmp_y.lword = y.My.Mantissa;
+
+    tmp_x.lword = x.byte[2] | 0x80;
+    tmp_y.lword = y.byte[2] | 0x80;
+
+    if(x.My.Exponent < y.My.Exponent){
+        //Shift the mantissa of the smallest operator to align with the biggest.
+        tmp_x.lword >>= y.My.Exponent - x.My.Exponent;
+
+        //Set the biggest exponent to the result exponent
+        result.My.Exponent = y.My.Exponent;
+    }
+    else{
+        //Shift the mantissa of the smallest operator to align with the biggest.
+        tmp_y.lword >>= x.My.Exponent - y.My.Exponent;
+
+        //Set the biggest exponent to the result exponent
+        result.My.Exponent = x.My.Exponent;
+    }
+
+    if(tmp_x.lword >= tmp_y.lword){
+        result.My.Sign = x.My.Sign;
+        tmp_r.lword = x.My.Sign ^ y.My.Sign ? tmp_x.lword - tmp_y.lword : tmp_x.lword + tmp_y.lword;
+    }
+    else{
+        result.My.Sign = y.My.Sign;
+        tmp_r.lword = x.My.Sign ^ y.My.Sign ? tmp_y.lword - tmp_x.lword : tmp_y.lword + tmp_x.lword;
+    }
+
+    //Adjust Exponent and Mantissa
+    while((tmp_r.byte[2]&0x80) == 0 || tmp_r.byte[3] > 0){
+        if(tmp_r.byte[3] > 0){
+            debug("[ ADJUST ] Cocient: Shift Right\n");
+            ++result.My.Exponent;
+            tmp_r.lword >>= 1;
+        }
+        else{
+            debug("[ ADJUST ] Cocient: Shift left\n");
+            --result.My.Exponent;
+            tmp_r.lword <<= 1;
+        }
+    }
+
+    result.My.Mantissa = tmp_r.My.Mantissa;
+    return result;
+}
+
+
 Float32 float32_multiply(Float32 a, Float32 b){
     uint8_t index;
     Float32 Am, Bm, Cr;
