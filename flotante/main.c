@@ -77,11 +77,7 @@ Float32 float32_multiply(Float32 a, Float32 b){
     }
     else{
         debug("Ajuste de mantiza!\n");
-        Cr.byte[2] <<= 1;
-        debug("Shift 1  = %08x\n", Cr.lword);
-        Cr.byte[2] = (Cr.byte[1] & 0x80) ? (Cr.byte[2] | 0x01) : (Cr.byte[2] & 0xFE);
-        debug("Acarreo  = %08x\n", Cr.lword);
-        Cr.dbyte[0] <<= 1;
+        Cr.lword <<= 1;
         debug("Ultimo   = %08x\n", Cr.lword);
         Cr.My.Exponent = 0;
     }
