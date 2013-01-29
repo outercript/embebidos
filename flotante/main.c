@@ -14,7 +14,7 @@ void float32_print(Float32 p){
     debug("[ Hex Val  ]: 0x%08X\n", p.lword);
     debug("[ Sign     ]: %u\n", (int)p.My.Sign);
     debug("[ Exponent ]: %u\n", (int)p.My.Exponent);
-    debug("[ Mantissa ]: %08x\n\n", (int)p.My.Mantissa);
+    debug("[ Mantissa ]: %06x\n\n", (int)p.My.Mantissa);
 }
 
 uint8_t float32_isZero(Float32 p){
