@@ -27,7 +27,7 @@ clean :
 gtest-generator: gtest-generator.c
 	$(CC) $(CFLAGS) $^ -o $@
 	@echo " - Generating Test Cases ..."
-	@./$@ > $(AUTOGTEST)
+	@./$@ > $(AUTOGTEST).cc
 
 # ================= GTEST RULES =================== #
 
