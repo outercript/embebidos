@@ -1,10 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#define special_float(x) (x).My.Exponent != 0 && (x).My.Exponent != 0xFF
 
 typedef union{
     float f;
     uint32_t i;
+    struct {
+        unsigned int Mantissa: 23;
+        unsigned int Exponent: 8;
+        unsigned int Sign: 1;
+    } My;
 }Float32;
 
 void print_headers(){
@@ -71,12 +77,13 @@ printf(
 
 }
 
-float float32_rand(float min, float max){
+bool float32_validate_values(Float32 a, Float32 b, Float32 c){
+    return special_float(a)|special_float(b)|special_float(c);
+}
 
+float float32_rand(float min, float max){
     float random = ((float) rand()) / (float) RAND_MAX;
-    float diff = max - min;
-    float r = random * diff;
-    return min + r;
+    return min + (random * (max - min));
 }
 
 void float32_multiply(float min, float max, char *testcase, uint16_t limit){
@@ -85,9 +92,11 @@ void float32_multiply(float min, float max, char *testcase, uint16_t limit){
 
     printf("\n\n// %s Test Cases\n", testcase);
     for(index = 0; index < limit; index++){
-        A.f = float32_rand(min, max);
-        B.f = float32_rand(min, max);
-        result.f = A.f * B.f;
+        do{
+            A.f = float32_rand(min, max);
+            B.f = float32_rand(min, max);
+            result.f = A.f * B.f;
+        }while(float32_validate_values(A,B,result));
 
         printf("FLOAT32_MULTIPLY(TC_%s_%03d, "
                "%.8f, %.8f, %.8f);\n",
