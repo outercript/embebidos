@@ -195,6 +195,15 @@ Float32 float32_multiply(Float32 a, Float32 b){
 
 /*********   Division Algorithm    ************/
 
+float32_divide_check(x,y,z){
+    Float32 a,b,c;
+    a.fword = x;
+    b.fword = y;
+    c = float32_divide(a,b);
+    debug("%x08 / %x08\nResult: %x08", a.lword, b.lword, c.lword);
+    return float32_compare(z,c);
+}
+
 Float32 float32_divide(Float32 x, Float32 y ){
     //Performs the x/y float division
     Float32 dividend, divisor, cocient;
