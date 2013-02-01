@@ -123,6 +123,7 @@ Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
 /*********   Multiplication Algorithm    ************/
 
 Float32 float32_multiply(Float32 a, Float32 b){
+    uint8_t index, tmp;
     Float32 Am, Bm, Cr;
 
     Cr.lword = 0;
@@ -163,7 +164,12 @@ Float32 float32_multiply(Float32 a, Float32 b){
     Cr.dbyte[1] += Am.byte[2] * Bm.byte[2];
     debug("4ta Mult = %08x\n", Cr.lword);
 
+    // Save the Less Significant Byte,
+    // will need it when mantissa is adjusted
+    tmp = Cr.byte[0];
+
     Cr = float32_shiftL8(Cr);
+
     debug("Shift 8  = %08x\n", Cr.lword);
 
     // Normalize (if needed)
@@ -173,6 +179,7 @@ Float32 float32_multiply(Float32 a, Float32 b){
     else{
         debug("Ajuste de mantiza!\n");
         Cr.lword <<= 1;
+        Cr.byte[0] = (tmp & 0x80) ? Cr.byte[0] | 0x01 : Cr.byte[0] & 0xFE;
         debug("Ultimo   = %08x\n", Cr.lword);
         Cr.My.Exponent = 0;
     }
