@@ -123,7 +123,7 @@ Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
 /*********   Multiplication Algorithm    ************/
 
 Float32 float32_multiply(Float32 a, Float32 b){
-    uint8_t index, tmp;
+    uint8_t tmp;
     Float32 Am, Bm, Cr;
 
     Cr.lword = 0;
