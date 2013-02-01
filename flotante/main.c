@@ -240,6 +240,17 @@ Float32 float32_divide(Float32 x, Float32 y ){
 }
 
 
+uint8_t float32_multiply_check(float x, float y, float z){
+    Float32 a, b, exp, res;
+
+    a.fword = x;
+    b.fword = y;
+    exp.fword = z;
+
+    res = float32_multiply(a, b);
+    return float32_compare(exp, res);
+}
+
 int usage(){
     printf("Invalid Usage!! flotante.exe num1 num2\n");
     return 1;
