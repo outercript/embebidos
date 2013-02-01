@@ -168,7 +168,7 @@ Float32 float32_multiply(Float32 a, Float32 b){
     // will need it when mantissa is adjusted
     tmp = Cr.byte[0];
 
-    Cr = float32_shiftL8(Cr);
+    Cr = float32_shiftR8(Cr);
 
     debug("Shift 8  = %08x\n", Cr.lword);
 
