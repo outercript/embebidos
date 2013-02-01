@@ -48,6 +48,27 @@ printf(
     "    TEST(Multiplication, TEST_NAME){                       \\\n"
     "        EXPECT_FALSE(float32_multiply_check(x, y, z));     \\\n"
     "    }\n");
+
+printf(
+    "#define FLOAT32_ADDITION(TEST_NAME, x, y, z)                \\\n"
+    "    TEST(ADDITION, TEST_NAME){                              \\\n"
+    "        Float32 a, b, c;                                    \\\n"
+    "        a.fword = x;                                        \\\n"
+    "        b.fword = y;                                        \\\n"
+    "        c = float32_addition_substraction(a, b, 0);         \\\n"
+    "        ASSERT_FLOAT_EQ(z, c.fword);                        \\\n"
+    "    }                                                       \n\n");
+
+printf(
+    "#define FLOAT32_SUBSTRACTION(TEST_NAME, x, y, z)            \\\n"
+    "    TEST(SUBSTRACTION, TEST_NAME){                          \\\n"
+    "        Float32 a, b, c;                                    \\\n"
+    "        a.fword = x;                                        \\\n"
+    "        b.fword = y;                                        \\\n"
+    "        c = float32_addition_substraction(a, b, 1);         \\\n"
+    "        ASSERT_FLOAT_EQ(z, c.fword);                        \\\n"
+    "    }                                                       \n\n");
+
 }
 
 float float32_rand(float min, float max){
@@ -74,6 +95,38 @@ void float32_multiply(float min, float max, char *testcase, uint16_t limit){
     }
 }
 
+void float32_addition(float min, float max, char *testcase, uint16_t limit){
+    uint16_t index;
+    Float32 A, B, result;
+
+    printf("\n\n// %s Test Cases\n", testcase);
+    for(index = 0; index < limit; index++){
+        A.f = float32_rand(min, max);
+        B.f = float32_rand(min, max);
+        result.f = A.f + B.f;
+
+        printf("FLOAT32_ADDITION(TC_%s_%03d, "
+               "%.8f, %.8f, %.8f);\n",
+               testcase, index, A.f, B.f, result.f);
+    }
+}
+
+void float32_substraction(float min, float max, char *testcase, uint16_t limit){
+    uint16_t index;
+    Float32 A, B, result;
+
+    printf("\n\n// %s Test Cases\n", testcase);
+    for(index = 0; index < limit; index++){
+        A.f = float32_rand(min, max);
+        B.f = float32_rand(min, max);
+        result.f = A.f - B.f;
+
+        printf("FLOAT32_SUBSTRACTION(TC_%s_%03d, "
+               "%.8f, %.8f, %.8f);\n",
+               testcase, index, A.f, B.f, result.f);
+    }
+}
+
 
 int main() {
 
@@ -84,12 +137,8 @@ int main() {
     print_headers();
     print_macros();
 
-    //float32_multiply(1,100, "PositiveNumbers_Small", 20);
-    //float32_multiply(-100,100, "NegativeNumbers_Small", 20);
-    //float32_multiply(500,5000, "PositiveNumbers_Medium", 20);
-    float32_multiply(-50000000,50000000, "NegativeNumbers_Medium", 2500);
-
-
+    float32_addition(-1500,1500, "Addition", 2500);
+    // float32_substraction(-1000,1000, "substraction", 1000);
 
     return 0;
 }
