@@ -44,14 +44,10 @@ printf(
 
 void print_macros(){
 printf(
-    "#define FLOAT32_MULTIPLY(TEST_NAME, x, y, z)                \\\n"
-    "    TEST(Multiplication, TEST_NAME){                        \\\n"
-    "        Float32 a, b, c;                                    \\\n"
-    "        a.fword = x;                                        \\\n"
-    "        b.fword = y;                                        \\\n"
-    "        c = float32_multiply(a, b);                         \\\n"
-    "        ASSERT_FLOAT_EQ(z, c.fword);                        \\\n"
-    "    }                                                         \n");
+    "#define FLOAT32_MULTIPLY(TEST_NAME, x, y, z)               \\\n"
+    "    TEST(Multiplication, TEST_NAME){                       \\\n"
+    "        EXPECT_FALSE(float32_multiply_check(x, y, z));     \\\n"
+    "    }\n");
 }
 
 float float32_rand(float min, float max){
@@ -62,7 +58,7 @@ float float32_rand(float min, float max){
     return min + r;
 }
 
-void float32_multiply(float min, float max, char *testcase, uint8_t limit){
+void float32_multiply(float min, float max, char *testcase, uint16_t limit){
     uint16_t index;
     Float32 A, B, result;
 
@@ -88,10 +84,10 @@ int main() {
     print_headers();
     print_macros();
 
-    float32_multiply(1,100, "PositiveNumbers_Small", 20);
-    float32_multiply(-100,100, "NegativeNumbers_Small", 20);
-    float32_multiply(500,5000, "PositiveNumbers_Medium", 20);
-    float32_multiply(-5000,5000, "NegativeNumbers_Medium", 20);
+    //float32_multiply(1,100, "PositiveNumbers_Small", 20);
+    //float32_multiply(-100,100, "NegativeNumbers_Small", 20);
+    //float32_multiply(500,5000, "PositiveNumbers_Medium", 20);
+    float32_multiply(-50000000,50000000, "NegativeNumbers_Medium", 2500);
 
 
 
