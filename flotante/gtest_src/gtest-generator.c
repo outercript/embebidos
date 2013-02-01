@@ -82,7 +82,7 @@ printf(
     "    }                                                       \n\n");
 }
 
-bool float32_validate_values(Float32 a, Float32 b, Float32 c){
+uint8_t float32_validate_values(Float32 a, Float32 b, Float32 c){
     return special_float(a)|special_float(b)|special_float(c);
 }
 
@@ -178,12 +178,12 @@ int main() {
     //float32_multiply(1,100, "PositiveNumbers_Small", 20);
     //float32_multiply(-100,100, "NegativeNumbers_Small", 20);
     //float32_multiply(500,5000, "PositiveNumbers_Medium", 20);
-    float32_multiply(-50000000,50000000, "NegativeNumbers_Medium", 2500);
+    //float32_multiply(-50000000,50000000, "NegativeNumbers_Medium", 2500);
 
     float32_divide(1,100, "PositiveNumbers_Small", 20);
-    float32_divide(-100,100, "NegativeNumbers_Small", 20);
-    float32_divide(500,5000, "PositiveNumbers_Medium", 20);
-    float32_divide(-5000,5000, "NegativeNumbers_Medium", 20);
+    //float32_divide(-100,100, "NegativeNumbers_Small", 20);
+    //float32_divide(500,5000, "PositiveNumbers_Medium", 20);
+    //float32_divide(-5000,5000, "NegativeNumbers_Medium", 20);
 
 
 >>>>>>> Division: Added gtest testcase.

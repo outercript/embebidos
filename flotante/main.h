@@ -2,7 +2,7 @@
 #define FLOAT_LIB
 
 //#define STANDALONE
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
     #define debug printf
