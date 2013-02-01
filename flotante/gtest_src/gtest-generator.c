@@ -75,6 +75,11 @@ printf(
     "        ASSERT_FLOAT_EQ(z, c.fword);                        \\\n"
     "    }                                                       \n\n");
 
+printf(
+    "#define FLOAT32_DIVIDE(TEST_NAME, x, y, z)                  \\\n"
+    "    TEST(Division, TEST_NAME){                              \\\n"
+    "        EXPECT_FALSE(float32_divide_check(x,y,z));          \\\n"
+    "    }                                                       \n\n");
 }
 
 bool float32_validate_values(Float32 a, Float32 b, Float32 c){
@@ -137,6 +142,26 @@ void float32_substraction(float min, float max, char *testcase, uint16_t limit){
 }
 
 
+void float32_divide(float min, float max, char *testcase, uint8_t limit){
+    uint16_t index;
+    Float32 A, B, result;
+
+    printf("\n\n// %s Test Cases\n", testcase);
+    for(index = 0; index < limit; index++){
+
+        do{
+            A.f = float32_rand(min, max);
+            B.f = float32_rand(min, max);
+            result.f = A.f / B.f;
+        }while(float32_validate_values(A,B,result));
+
+        printf("FLOAT32_DIVIDE(TC_%s_%03d, "
+               "%.8f, %.8f, %.8f);\n",
+               testcase, index, A.f, B.f, result.f);
+    }
+}
+
+
 int main() {
 
     // Init the random seed
@@ -146,8 +171,22 @@ int main() {
     print_headers();
     print_macros();
 
+<<<<<<< HEAD
     float32_addition(-1500,1500, "Addition", 2500);
     // float32_substraction(-1000,1000, "substraction", 1000);
+=======
+    //float32_multiply(1,100, "PositiveNumbers_Small", 20);
+    //float32_multiply(-100,100, "NegativeNumbers_Small", 20);
+    //float32_multiply(500,5000, "PositiveNumbers_Medium", 20);
+    float32_multiply(-50000000,50000000, "NegativeNumbers_Medium", 2500);
+
+    float32_divide(1,100, "PositiveNumbers_Small", 20);
+    float32_divide(-100,100, "NegativeNumbers_Small", 20);
+    float32_divide(500,5000, "PositiveNumbers_Medium", 20);
+    float32_divide(-5000,5000, "NegativeNumbers_Medium", 20);
+
+
+>>>>>>> Division: Added gtest testcase.
 
     return 0;
 }
