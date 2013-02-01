@@ -74,8 +74,8 @@ Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
     tmp_x.lword = x.My.Mantissa;
     tmp_y.lword = y.My.Mantissa;
 
-    tmp_x.lword = x.byte[2] | 0x80;
-    tmp_y.lword = y.byte[2] | 0x80;
+    tmp_x.byte[2] |= 0x80;
+    tmp_y.byte[2] |= 0x80;
 
     if(x.My.Exponent < y.My.Exponent){
         //Shift the mantissa of the smallest operator to align with the biggest.
@@ -116,6 +116,7 @@ Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
     }
 
     result.My.Mantissa = tmp_r.My.Mantissa;
+    debug("OUR RESULT %08x\n",result.lword);
     return result;
 }
 
