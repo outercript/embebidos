@@ -24,6 +24,25 @@ uint8_t float32_isZero(Float32 p){
         return FALSE;
 }
 
+uint8_t float32_compare(Float32 a, Float32 b){
+    uint32_t diff;
+
+    // Calculate the difference between the numbers
+    diff = (a.lword > b.lword) ? a.lword - b.lword : b.lword - a.lword;
+
+    // Check if difference is below the threshold
+    if(diff < FLOAT32_DIFFERENCE_THRESHOLD){
+        return FLOAT32_EQUAL;
+    }
+
+    else{
+        // Give some verbose so we can trust this thing
+        printf("Expected   : 0x%08x - [ %.8f ]\n", a.lword, a.fword);
+        printf("Result     : 0x%08x - [ %.8f ]\n", b.lword, b.fword);
+        printf("Difference : %u\n", diff);
+        return FLOAT32_DIFFERENT;
+    }
+}
 
 /*********   Shift Left/Right 8 bits   **********/
 

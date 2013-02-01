@@ -17,6 +17,12 @@ enum{
     TRUE
 };
 
+enum{
+    FLOAT32_EQUAL,
+    FLOAT32_DIFFERENT,
+    FLOAT32_DIFFERENCE_THRESHOLD
+};
+
 typedef union {
     uint8_t  byte[4];
     uint16_t dbyte[2];
@@ -33,7 +39,11 @@ typedef union {
 // Function Prototypes
 void print_word_size();
 void float32_print(Float32 p);
+
 uint8_t float32_isZero(Float32 p);
+uint8_t float32_compare(Float32 a, Float32 b);
+uint8_t float32_multiply_check(float x, float y, float z);
+
 Float32 float32_shiftL8(Float32 x);
 Float32 float32_shiftR8(Float32 x);
 Float32 float32_multiply(Float32 a, Float32 b);
