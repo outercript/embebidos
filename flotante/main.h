@@ -43,6 +43,7 @@ void float32_print(Float32 p);
 uint8_t float32_isZero(Float32 p);
 uint8_t float32_compare(Float32 a, Float32 b);
 uint8_t float32_multiply_check(float x, float y, float z);
+uint8_t float32_divide_check(float x, float y, float z);
 
 Float32 float32_shiftL8(Float32 x);
 Float32 float32_shiftR8(Float32 x);

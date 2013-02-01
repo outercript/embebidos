@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#define special_float(x) (x).My.Exponent != 0 && (x).My.Exponent != 0xFF
 
 typedef union{
     float f;
@@ -78,12 +77,20 @@ printf(
 printf(
     "#define FLOAT32_DIVIDE(TEST_NAME, x, y, z)                  \\\n"
     "    TEST(Division, TEST_NAME){                              \\\n"
-    "        EXPECT_FALSE(float32_divide_check(x,y,z));          \\\n"
+    "        EXPECT_FALSE(float32_divide_check(x, y, z));        \\\n"
     "    }                                                       \n\n");
 }
 
+
+uint8_t float32_is_special(Float32 a){
+    if(a.My.Exponent == 0 || a.My.Exponent == 0xFF)
+        return 1;
+    else
+        return 0;
+}
+
 uint8_t float32_validate_values(Float32 a, Float32 b, Float32 c){
-    return special_float(a)|special_float(b)|special_float(c);
+    return float32_is_special(a) || float32_is_special(b) || float32_is_special(c);
 }
 
 float float32_rand(float min, float max){
@@ -142,7 +149,7 @@ void float32_substraction(float min, float max, char *testcase, uint16_t limit){
 }
 
 
-void float32_divide(float min, float max, char *testcase, uint8_t limit){
+void float32_divide(float min, float max, char *testcase, uint16_t limit){
     uint16_t index;
     Float32 A, B, result;
 
@@ -171,22 +178,19 @@ int main() {
     print_headers();
     print_macros();
 
-<<<<<<< HEAD
-    float32_addition(-1500,1500, "Addition", 2500);
-    // float32_substraction(-1000,1000, "substraction", 1000);
-=======
+    //float32_addition(-1500,1500, "Addition", 2500);
+    //float32_substraction(-1000,1000, "substraction", 1000);
     //float32_multiply(1,100, "PositiveNumbers_Small", 20);
     //float32_multiply(-100,100, "NegativeNumbers_Small", 20);
     //float32_multiply(500,5000, "PositiveNumbers_Medium", 20);
     //float32_multiply(-50000000,50000000, "NegativeNumbers_Medium", 2500);
 
-    float32_divide(1,100, "PositiveNumbers_Small", 20);
+    float32_divide(1,100, "PositiveNumbers_Small", 2000);
     //float32_divide(-100,100, "NegativeNumbers_Small", 20);
     //float32_divide(500,5000, "PositiveNumbers_Medium", 20);
     //float32_divide(-5000,5000, "NegativeNumbers_Medium", 20);
 
 
->>>>>>> Division: Added gtest testcase.
 
     return 0;
 }

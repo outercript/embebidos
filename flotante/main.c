@@ -195,14 +195,14 @@ Float32 float32_multiply(Float32 a, Float32 b){
 
 /*********   Division Algorithm    ************/
 
-uint8_t float32_divide_check(x,y,z){
-    Float32 a,b,c,expected;
+uint8_t float32_divide_check(float x, float y, float z){
+    Float32 a, b, c, expected;
     a.fword = x;
     b.fword = y;
-    c = float32_divide(a,b);
+    c = float32_divide(a, b);
     expected.fword = z;
-    debug("%x08 / %x08\nResult: %x08", a.lword, b.lword, c.lword);
-    return float32_compare(expected,c);
+    debug("%x08 / %x08\nResult: %x08\n", a.lword, b.lword, c.lword);
+    return float32_compare(expected, c);
 }
 
 Float32 float32_divide(Float32 x, Float32 y ){
