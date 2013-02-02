@@ -5,6 +5,8 @@
 
 typedef union{
     float f;
+    uint8_t byte[4];
+    uint16_t dbyte[2];
     uint32_t i;
     struct {
         unsigned int Mantissa: 23;
@@ -87,8 +89,14 @@ uint8_t float32_validate_values(Float32 a, Float32 b, Float32 c){
 }
 
 float float32_rand(float min, float max){
-    float random = ((float) rand()) / (float) RAND_MAX;
-    return min + (random * (max - min));
+    //float random = ((float) rand()) / (float) RAND_MAX;
+    //return min + (random * (max - min));
+    Float32 dummy;
+    dummy.byte[0] = (rand() & 0xFF);
+    dummy.byte[1] = (rand() & 0xFF);
+    dummy.byte[2] = (rand() & 0xFF);
+    dummy.byte[3] = (rand() & 0xFF);
+    return dummy.f;
 }
 
 void float32_multiply(float min, float max, char *testcase, uint16_t limit){
