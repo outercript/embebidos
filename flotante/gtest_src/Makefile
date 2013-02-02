@@ -46,10 +46,10 @@ gtest_main.a : gtest-all.o gtest_main.o
 # ================== UNIT TESTS =================== #
 
 main.o : $(USER_DIR)/main.c $(USER_DIR)/main.h $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/main.c
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/main.c -fprofile-arcs -ftest-coverage
 
 $(AUTOGTEST).o : $(AUTOGTEST).cc $(USER_DIR)/main.h $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $<
 
 gtest-flotante : main.o $(AUTOGTEST).o gtest_main.a
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ -lgcov
