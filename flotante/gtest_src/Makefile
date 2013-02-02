@@ -22,7 +22,7 @@ AUTOGTEST = auto-gtest
 all : $(BINS)
 
 clean :
-	rm -f $(BINS) $(AUTOGTEST) gtest.a gtest_main.a *.o
+	rm -f $(BINS) $(AUTOGTEST).cc gtest.a gtest_main.a *.o
 
 gtest-generator: gtest-generator.c
 	$(CC) $(CFLAGS) $^ -o $@

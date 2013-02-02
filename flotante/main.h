@@ -1,8 +1,10 @@
 #ifndef FLOAT_LIB
 #define FLOAT_LIB
 
+#include <stdint.h>
+
 //#define STANDALONE
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
     #define debug printf
