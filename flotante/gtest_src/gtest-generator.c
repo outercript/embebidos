@@ -111,9 +111,9 @@ void float32_multiply(float min, float max, char *testcase, uint16_t limit){
             result.f = A.f * B.f;
         }while(float32_validate_values(A,B,result));
 
-        printf("FLOAT32_MULTIPLY(TC_%s_%03d, "
-               "%.8f, %.8f, %.8f);\n",
-               testcase, index, A.f, B.f, result.f);
+        printf("FLOAT32_MULTIPLY(TC_%s_%03u, "
+               "0x%08x, 0x%08x, 0x%08x);\n",
+               testcase, index, A.i, B.i, result.i);
     }
 }
 

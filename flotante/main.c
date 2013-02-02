@@ -258,14 +258,19 @@ Float32 float32_divide(Float32 x, Float32 y ){
 }
 
 
-uint8_t float32_multiply_check(float x, float y, float z){
+uint8_t float32_multiply_check(uint32_t x, uint32_t y, uint32_t z){
     Float32 a, b, exp, res;
 
-    a.fword = x;
-    b.fword = y;
-    exp.fword = z;
+    a.lword = x;
+    b.lword = y;
+    exp.lword = z;
 
     res = float32_multiply(a, b);
+
+    printf("Oper A - 0x%08X \t %e\n", a.lword, a.fword);
+    printf("Oper B - 0x%08X \t %e\n", b.lword, b.fword);
+    printf("Result - 0x%08X \t %e\n", res.lword, res.fword);
+
     return float32_compare(exp, res);
 }
 
