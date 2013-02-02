@@ -3,10 +3,10 @@
 #include "main.h"
 
 void print_word_size(){
-    printf("Char : %u\n", sizeof(char));
-    printf("Short : %u\n", sizeof(short));
-    printf("Integer : %u\n", sizeof(int));
-    printf("Long : %u\n", sizeof(long));
+    printf("Char  : %u\n", (uint8_t)sizeof(char));
+    printf("Short : %u\n", (uint8_t)sizeof(short));
+    printf("Int   : %u\n", (uint8_t)sizeof(int));
+    printf("Long  : %u\n", (uint8_t)sizeof(long));
 }
 
 void float32_print(Float32 p){
