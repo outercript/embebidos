@@ -135,6 +135,7 @@ Float32 float32_multiply(Float32 a, Float32 b){
 
     // Test for Zero
     if(float32_isZero(a) || float32_isZero(b)){
+        Cr.My.Sign = (a.My.Sign ^ b.My.Sign);
         debug("Multiply by Zero\n");
         return Cr;
     }
