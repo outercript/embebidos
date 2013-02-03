@@ -7,6 +7,7 @@ GTEST_DIR = $(GITROOTDIR)/gtest-1.6.0
 CPPFLAGS += -I$(GTEST_DIR)/include
 CXXFLAGS += -g -Wall -Wextra
 CFLAGS   += -Wall
+MAKEFLAGS += -j4
 
 GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
                 $(GTEST_DIR)/include/gtest/internal/*.h
@@ -15,19 +16,24 @@ GTEST_SRCS_   = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 
 USER_DIR  = ../
 BINS	  = gtest-generator gtest-flotante
-AUTOGTEST = auto-gtest
+TEST_NAME = multiplication division addition substraction
+TESTS	  = $(addprefix test-,$(TEST_NAME))
+TESTS_SRC = $(addsuffix .cc, $(TESTS))
+TESTS_OBJ = $(addsuffix .o, $(TESTS_SRC))
 
 # ================ GENERIC RULES ================= #
 
 all : $(BINS)
 
 clean :
-	rm -f $(BINS) $(AUTOGTEST).cc gtest.a gtest_main.a *.o
+	rm -f $(BINS) $(TESTS_SRC) gtest.a gtest_main.a *.o
 
 gtest-generator: gtest-generator.c
 	$(CC) $(CFLAGS) $^ -o $@
-	@echo " - Generating Test Cases ..."
-	@./$@ > $(AUTOGTEST).cc
+
+$(TESTS_SRC): gtest-generator
+	@echo "Generating $@"
+	@./gtest-generator $(subst test-,,$@) > $@
 
 # ================= GTEST RULES =================== #
 
@@ -48,8 +54,9 @@ gtest_main.a : gtest-all.o gtest_main.o
 main.o : $(USER_DIR)/main.c $(USER_DIR)/main.h $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/main.c -fprofile-arcs -ftest-coverage
 
-$(AUTOGTEST).o : $(AUTOGTEST).cc $(USER_DIR)/main.h $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $<
 
-gtest-flotante : main.o $(AUTOGTEST).o gtest_main.a
+$(TESTS_OBJ) : $(TESTS_SRC) $(USER_DIR)/main.h $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(subst .o,,$@) -o $@
+
+gtest-flotante : main.o $(TESTS_OBJ) gtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ -lgcov
