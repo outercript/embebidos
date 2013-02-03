@@ -169,8 +169,28 @@ void float32_divide(float min, float max, char *testcase, uint16_t limit){
     }
 }
 
+int usage(char *this_app){
+    printf("Incorrect usage!\n\n");
+    printf("%s <argument>\n", this_app);
+    printf("Valid arguments are a/d/m/s\n"
+           "\t a - Generate Addition Test Cases\n"
+           "\t d - Generate Division Test Cases\n"
+           "\t m - Generate Multiplication Test Cases\n"
+           "\t s - Generate Substraction Test Cases\n");
+    exit(EXIT_FAILURE);
+}
 
-int main() {
+int main(int argc, char **argv) {
+    uint8_t opt;
+    // Make sure to receive only one argument
+    if(argc != 2)
+        usage(argv[0]);
+
+    opt = argv[1][0];
+    if (opt != 'm' && opt != 'd' && opt != 'a' && opt != 's'){
+        printf("Unrecognized Argument %s -", argv[1]);
+        usage(argv[0]);
+    }
 
     // Init the random seed
     srand(time(NULL));
@@ -179,20 +199,26 @@ int main() {
     print_headers();
     print_macros();
 
-    //float32_addition(-1500,1500, "Addition", 2500);
-    //float32_substraction(-1000,1000, "substraction", 1000);
+    switch(opt){
+        case 'a':
+            float32_addition(-1500,1500, "Addition", 2500);
+            break;
 
-    //float32_multiply(1,100, "PositiveNumbers_Small", 20);
-    //float32_multiply(-100,100, "NegativeNumbers_Small", 20);
-    //float32_multiply(500,5000, "PositiveNumbers_Medium", 20);
-    float32_multiply(-50000000,50000000, "NegativeNumbers_Medium", 3500);
+        case 's':
+            float32_substraction(-1000,1000, "substraction", 1000);
+            break;
 
-    //float32_divide(1,100, "PositiveNumbers_Small", 2000);
-    //float32_divide(-100,100, "NegativeNumbers_Small", 20);
-    //float32_divide(500,5000, "PositiveNumbers_Medium", 20);
-    //float32_divide(-5000,5000, "NegativeNumbers_Medium", 20);
+        case 'm':
+            float32_multiply(-50000000,50000000, "NegativeNumbers_Medium", 3500);
+            break;
 
-
+        case 'd':
+            float32_divide(1,100, "PositiveNumbers_Small", 2000);
+            float32_divide(-100,100, "NegativeNumbers_Small", 20);
+            float32_divide(500,5000, "PositiveNumbers_Medium", 20);
+            float32_divide(-5000,5000, "NegativeNumbers_Medium", 20);
+            break;
+    }
 
     return 0;
 }
