@@ -51,12 +51,12 @@ gtest_main.a : gtest-all.o gtest_main.o
 
 # ================== UNIT TESTS =================== #
 
-main.o : $(USER_DIR)/main.c $(USER_DIR)/main.h $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/main.c -fprofile-arcs -ftest-coverage
+flotante.o : $(USER_DIR)/flotante.c $(USER_DIR)/flotante.h $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -fprofile-arcs -ftest-coverage
 
 
-$(TESTS_OBJ) : $(TESTS_SRC) $(USER_DIR)/main.h $(GTEST_HEADERS)
+$(TESTS_OBJ) : $(TESTS_SRC) $(USER_DIR)/flotante.h $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(subst .o,,$@) -o $@
 
-gtest-flotante : main.o $(TESTS_OBJ) gtest_main.a
+gtest-flotante : flotante.o $(TESTS_OBJ) gtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ -lgcov

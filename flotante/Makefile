@@ -15,5 +15,5 @@ all: $(BIN)
 clean:
 	${RM} $(OBJ) $(BIN)
 
-$(BIN): main.c
+$(BIN): flotante.c
 	$(CC) $(CFLAGS) $< -o $(BIN)
