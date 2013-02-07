@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "main.h"
+#include "flotante.h"
 
 void print_word_size(){
     printf("Char  : %u\n", (uint8_t)sizeof(char));
@@ -64,6 +64,37 @@ Float32 float32_shiftR8(Float32 x){
 
 
 /*********   Addition/Substraction Algorithm    ************/
+uint8_t float32_addition_check(uint32_t x, uint32_t y, uint32_t z){
+    Float32 a, b, exp, res;
+
+    a.lword = x;
+    b.lword = y;
+    exp.lword = z;
+
+    res = float32_addition_substraction(a, b, 0);
+
+    printf("Oper A - 0x%08X \t %e\n", a.lword, a.fword);
+    printf("Oper B - 0x%08X \t %e\n", b.lword, b.fword);
+    printf("Result - 0x%08X \t %e\n", res.lword, res.fword);
+
+    return float32_compare(exp, res);
+}
+
+uint8_t float32_substraction_check(uint32_t x, uint32_t y, uint32_t z){
+    Float32 a, b, exp, res;
+
+    a.lword = x;
+    b.lword = y;
+    exp.lword = z;
+
+    res = float32_addition_substraction(a, b, 1);
+
+    printf("Oper A - 0x%08X \t %e\n", a.lword, a.fword);
+    printf("Oper B - 0x%08X \t %e\n", b.lword, b.fword);
+    printf("Result - 0x%08X \t %e\n", res.lword, res.fword);
+
+    return float32_compare(exp, res);
+}
 
 Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
     Float32 tmp_x, tmp_y, tmp_r ,result;
@@ -196,12 +227,12 @@ Float32 float32_multiply(Float32 a, Float32 b){
 
 /*********   Division Algorithm    ************/
 
-uint8_t float32_divide_check(float x, float y, float z){
+uint8_t float32_divide_check(uint32_t x, uint32_t y, uint32_t z){
     Float32 a, b, c, expected;
-    a.fword = x;
-    b.fword = y;
+    a.lword = x;
+    b.lword = y;
     c = float32_divide(a, b);
-    expected.fword = z;
+    expected.lword = z;
     debug("%x08 / %x08\nResult: %x08\n", a.lword, b.lword, c.lword);
     return float32_compare(expected, c);
 }
