@@ -307,25 +307,51 @@ uint8_t float32_multiply_check(uint32_t x, uint32_t y, uint32_t z){
 }
 
 int usage(){
-    printf("Invalid Usage!! flotante.exe num1 num2\n");
-    return 1;
+    printf("Invalid Usage!! flotante.exe oper num1 num2 result\n");
+    exit(EXIT_FAILURE);
 }
 
 #ifdef STANDALONE
 int main(int argc, char *argv[]) {
-    printf("Argumentos : %u\n", argc);
+    uint8_t retcode, opt;
+    Float32 OperA, OperB, ExpResult;
 
     // Parse Cmdline Arguments
-    if(argc != 3)
+    if(argc != 5)
 		usage();
 
-    Float32 T1, T2, T3;
-    T1.fword = strtof(argv[1], NULL);
-    T2.fword = strtof(argv[2], NULL);
+    opt = argv[1][0];
+    if (opt != 'm' && opt != 'd' && opt != 'a' && opt != 's'){
+        printf("Unrecognized Argument %s -", argv[1]);
+        usage(argv[0]);
+    }
 
-    T3 = float32_multiply(T1, T2);
-    float32_print(T3);
+    OperA.lword = strtol(argv[2], NULL, 0);
+    OperB.lword = strtol(argv[3], NULL, 0);
+    ExpResult.lword = strtol(argv[4], NULL, 0);
 
-	return 0;
+    switch(opt){
+        case 'a':
+            retcode = float32_addition_check(OperA.fword, OperB.fword, ExpResult.fword);
+            break;
+
+        case 's':
+            retcode = float32_substraction_check(OperA.fword, OperB.fword, ExpResult.fword);
+            break;
+
+        case 'm':
+            retcode = float32_multiply_check(OperA.lword, OperB.lword, ExpResult.lword);
+            break;
+
+        case 'd':
+            retcode = float32_divide_check(OperA.fword, OperB.fword, ExpResult.fword);
+            break;
+
+        default:
+            retcode = 2;
+            break;
+    }
+
+	return retcode;
 }
 #endif
