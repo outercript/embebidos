@@ -43,7 +43,7 @@ gtest-all.o : $(GTEST_SRCS_)
 
 gtest_main.o : $(GTEST_SRCS_)
 	@$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest_main.cc
+            $(USER_DIR)/gtest_src/gtest_main.cc
 
 gtest_main.a : gtest-all.o gtest_main.o
 	@$(AR) $(ARFLAGS) $@ $^
@@ -51,12 +51,8 @@ gtest_main.a : gtest-all.o gtest_main.o
 
 # ================== UNIT TESTS =================== #
 
-flotante.o : $(USER_DIR)/flotante.c $(USER_DIR)/flotante.h $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -fprofile-arcs -ftest-coverage
-
-
-$(TESTS_OBJ) : $(TESTS_SRC) $(USER_DIR)/flotante.h $(GTEST_HEADERS)
+$(TESTS_OBJ) : $(TESTS_SRC) $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(subst .o,,$@) -o $@
 
-gtest-flotante : flotante.o $(TESTS_OBJ) gtest_main.a
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ -lgcov
+gtest-flotante : $(TESTS_OBJ) gtest_main.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
