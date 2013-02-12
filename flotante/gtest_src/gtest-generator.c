@@ -44,34 +44,43 @@ printf(
     "// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE   \n"
     "// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.    \n"
     "                                                                           \n"
-    "#include <gtest/gtest.h>                                                   \n"
-    "#include \"../flotante.h\"                                             \n\n\n");
+    "#include <gtest/gtest.h>                                                 \n\n"
+    "extern char cmd_line[250];                                                 \n"
+    "extern char exec_target[250];                                            \n\n");
 }
 
 void print_macros(){
 printf(
-    "#define FLOAT32_MULTIPLY(TEST_NAME, x, y, z)                \\\n"
-    "    TEST(Multiplication, TEST_NAME){                        \\\n"
-    "        EXPECT_FALSE(float32_multiply_check(x, y, z));      \\\n"
-    "    }                                                       \n\n");
+    "#define FLOAT32_MULTIPLY(TEST_NAME, x, y, z)                           \\\n"
+    "    TEST(Multiplication, TEST_NAME){                                   \\\n"
+    "        sprintf(cmd_line, \"./runtest.py %%s -o m -a %%i -b %%i -e %%i -v\", exec_target, x, y, z); \\\n"
+    "        printf(\"%%s\\n\", cmd_line);                                  \\\n"
+    "        EXPECT_FALSE(system(cmd_line));                                \\\n"
+    "    }                                                                  \n\n");
 
 printf(
-    "#define FLOAT32_ADDITION(TEST_NAME, x, y, z)                \\\n"
-    "    TEST(ADDITION, TEST_NAME){                              \\\n"
-    "        EXPECT_FALSE(float32_addition_check(x, y, z));      \\\n"
-    "    }                                                       \n\n");
+    "#define FLOAT32_ADDITION(TEST_NAME, x, y, z)                           \\\n"
+    "    TEST(ADDITION, TEST_NAME){                                         \\\n"
+    "        sprintf(cmd_line, \"./runtest.py %%s -o a -a %%i -b %%i -e %%i -v\", exec_target, x, y, z); \\\n"
+    "        printf(\"%%s\\n\", cmd_line);                                  \\\n"
+    "        EXPECT_FALSE(system(cmd_line));                                \\\n"
+    "    }                                                                  \n\n");
 
 printf(
-    "#define FLOAT32_SUBSTRACTION(TEST_NAME, x, y, z)            \\\n"
-    "    TEST(SUBSTRACTION, TEST_NAME){                          \\\n"
-    "        EXPECT_FALSE(float32_substraction_check(x, y, z));  \\\n"
-    "    }                                                       \n\n");
+    "#define FLOAT32_SUBSTRACTION(TEST_NAME, x, y, z)                       \\\n"
+    "    TEST(SUBSTRACTION, TEST_NAME){                                     \\\n"
+    "        sprintf(cmd_line, \"./runtest.py %%s -o s -a %%i -b %%i -e %%i -v\", exec_target, x, y, z); \\\n"
+    "        printf(\"%%s\\n\", cmd_line);                                  \\\n"
+    "        EXPECT_FALSE(system(cmd_line));                                \\\n"
+    "    }                                                                  \n\n");
 
 printf(
-    "#define FLOAT32_DIVIDE(TEST_NAME, x, y, z)                  \\\n"
-    "    TEST(Division, TEST_NAME){                              \\\n"
-    "        EXPECT_FALSE(float32_divide_check(x, y, z));        \\\n"
-    "    }                                                       \n\n");
+    "#define FLOAT32_DIVIDE(TEST_NAME, x, y, z)                             \\\n"
+    "    TEST(Division, TEST_NAME){                                         \\\n"
+    "        sprintf(cmd_line, \"./runtest.py %%s -o d -a %%i -b %%i -e %%i -v\", exec_target, x, y, z); \\\n"
+    "        printf(\"%%s\\n\", cmd_line);                                  \\\n"
+    "        EXPECT_FALSE(system(cmd_line));                                \\\n"
+    "    }                                                                  \n\n");
 }
 
 
