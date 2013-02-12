@@ -4,7 +4,7 @@
 CPP      = g++
 CC       = gcc
 
-BIN      = flotante.exe
+BIN      = flotante
 CFLAGS   = $(INCS) -fprofile-arcs -ftest-coverage -Wall
 RM       = rm -f
 
