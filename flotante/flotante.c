@@ -332,11 +332,11 @@ int main(int argc, char *argv[]) {
 
     switch(opt){
         case 'a':
-            retcode = float32_addition_check(OperA.fword, OperB.fword, ExpResult.fword);
+            retcode = float32_addition_check(OperA.lword, OperB.lword, ExpResult.lword);
             break;
 
         case 's':
-            retcode = float32_substraction_check(OperA.fword, OperB.fword, ExpResult.fword);
+            retcode = float32_substraction_check(OperA.lword, OperB.lword, ExpResult.lword);
             break;
 
         case 'm':
@@ -344,7 +344,7 @@ int main(int argc, char *argv[]) {
             break;
 
         case 'd':
-            retcode = float32_divide_check(OperA.fword, OperB.fword, ExpResult.fword);
+            retcode = float32_divide_check(OperA.lword, OperB.lword, ExpResult.lword);
             break;
 
         default:

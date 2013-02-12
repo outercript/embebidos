@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-//#define STANDALONE
+#define STANDALONE
 //#define DEBUG
 
 #ifdef DEBUG
