@@ -123,6 +123,9 @@ Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
         result.My.Exponent = x.My.Exponent;
     }
 
+    tmp_x.lword = float32_shiftL8(tmp_x).lword >> 1;
+	tmp_y.lword = float32_shiftL8(tmp_y).lword >> 1;
+
     if(tmp_x.lword >= tmp_y.lword){
         result.My.Sign = x.My.Sign;
         tmp_r.lword = x.My.Sign ^ y.My.Sign ? tmp_x.lword - tmp_y.lword : tmp_x.lword + tmp_y.lword;
@@ -131,6 +134,8 @@ Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
         result.My.Sign = y.My.Sign;
         tmp_r.lword = x.My.Sign ^ y.My.Sign ? tmp_y.lword - tmp_x.lword : tmp_y.lword + tmp_x.lword;
     }
+
+	tmp_r.lword >>= 7;
 
     //Adjust Exponent and Mantissa
     while((tmp_r.byte[2]&0x80) == 0 || tmp_r.byte[3] > 0){
