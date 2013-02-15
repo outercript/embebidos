@@ -23,10 +23,13 @@ TESTS_OBJ = $(addsuffix .o, $(TESTS_SRC))
 
 # ================ GENERIC RULES ================= #
 
-all : $(BINS)
+all : $(BINS) install
 
 clean :
 	rm -f $(BINS) $(TESTS_SRC) gtest.a gtest_main.a *.o
+
+install: gtest-flotante
+	@cp gtest-flotante $(USER_DIR)
 
 gtest-generator: gtest-generator.c
 	$(CC) $(CFLAGS) $^ -o $@
