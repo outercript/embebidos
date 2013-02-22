@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 import os
 import sys
+
+import time
+import serial
 import subprocess
 import optparse
 
+SERIAL_PORT = "/dev/ttyUSB0"
+SERIAL_BAUD = 9600
+SERIAL_SIZE = 32
+
+FRAME_ERROR = "FFFFFFFF"
 
 class Runtest():
 
@@ -35,7 +43,60 @@ class Runtest():
         return p.returncode
 
     def run_remote(self):
-        pass
+        result = ""
+        retry_count = 3
+        oper_symbol = {'a':'+', 's':'-', 'm':'*', 'd':'/'}
+        oper_string = "%s%s%s\n" % (self.operA, oper_symbol[self.operation], self.operB)
+
+        # Initialize the serial port
+        serial_com = serial.Serial(port=SERIAL_PORT, baudrate=SERIAL_BAUD, timeout=0.5)
+
+        # Try to send data to uC, retry if data gets corrupted
+        while retry_count > 0:
+
+            # Write the data stream for the uC
+            serial_com.write(oper_string)
+
+            # Read the response from the uC
+            result = serial_com.readline()
+            result = result.strip()
+
+            # Check for frame errors
+            if result == FRAME_ERROR:
+                retry_count -= 1
+                print "Frame error: Retrys left %s" % retry_count
+
+            else:
+                break
+
+        # Close serial port
+        serial_com.close()
+
+        # Check we received a valid value
+        if retry_count > 0:
+            return self.compare_result(result)
+
+        else:
+            print "Error: Too many frame errors"
+            return 5
+
+    def compare_result(result):
+        diff   = 0
+        result = result.strip()
+
+        # Convert Hex to Int representation
+        real     = int(result, 16)
+        expected = int(self.expected, 16)
+        diff     = abs(expected - real)
+
+        if diff > 1:
+            print "Real     : %s" % result
+            print "Expected : %s" % self.expected
+            print "Diff     : %s" % diff
+
+            return 2
+
+
 
 if __name__ == "__main__":
 
