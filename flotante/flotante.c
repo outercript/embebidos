@@ -17,6 +17,47 @@ void float32_print(Float32 p){
     debug("[ Mantissa ]: %06x\n\n", (int)p.My.Mantissa);
 }
 
+/*----------------------------------------------------
+    WA for shitty freescale religious code thingys
+-----------------------------------------------------*/
+
+/* Getters */
+
+uint8_t getExponent(Float32 a){
+    a.byte[0] = (a.byte[3]<<1)|((a.byte[2]&0x80)>0);
+    return a.byte[0];
+}
+
+uint32_t getMantissa(Float32 a){
+    a.byte[3] = 0;
+    a.byte[2] = a.byte[2]&0x7F;
+    return a.lword;
+}
+
+/* Setters */
+
+void setSign(Float32 *a, uint8_t value){
+    (*a).byte[3] = value > 0 ? (*a).byte[3]|0x80 : (*a).byte[3]&0x7F ;
+}
+
+void setExponent(Float32 *a, uint8_t value){
+
+    (*a).byte[3] = ((*a).byte[3]&0x80)|(value>>1);
+    (*a).byte[2] = ((*a).byte[2]&0x7F)|(value<<7);
+
+}
+
+void setMantissa(Float32 *a, uint32_t value){
+    Float32 tmp;
+    tmp.lword = value;
+    (*a).byte[2]  = (((*a).byte[2])&0x80)|(tmp.byte[2]&0x7F);
+    (*a).dbyte[0] = tmp.dbyte[0];
+}
+
+/*----------------------------------------------------
+    End of Freescale shitty religious code thingys WA
+-----------------------------------------------------*/
+
 uint8_t float32_isZero(Float32 p){
     if(p.My.Exponent == 0 && p.My.Mantissa == 0)
        return TRUE;
@@ -37,9 +78,9 @@ uint8_t float32_compare(Float32 a, Float32 b){
 
     else{
         // Give some verbose so we can trust this thing
-        printf("Expected   : 0x%08x - [ %.8f ]\n", a.lword, a.fword);
-        printf("Result     : 0x%08x - [ %.8f ]\n", b.lword, b.fword);
-        printf("Difference : %u\n", diff);
+        debug("Expected   : 0x%08x - [ %.8f ]\n", a.lword, a.fword);
+        debug("Result     : 0x%08x - [ %.8f ]\n", b.lword, b.fword);
+        debug("Difference : %u\n", diff);
         return FLOAT32_DIFFERENT;
     }
 }
@@ -73,9 +114,9 @@ uint8_t float32_addition_check(uint32_t x, uint32_t y, uint32_t z){
 
     res = float32_addition_substraction(a, b, 0);
 
-    printf("Oper A - 0x%08X \t %e\n", a.lword, a.fword);
-    printf("Oper B - 0x%08X \t %e\n", b.lword, b.fword);
-    printf("Result - 0x%08X \t %e\n", res.lword, res.fword);
+    debug("Oper A - 0x%08X \t %e\n", a.lword, a.fword);
+    debug("Oper B - 0x%08X \t %e\n", b.lword, b.fword);
+    debug("Result - 0x%08X \t %e\n", res.lword, res.fword);
 
     return float32_compare(exp, res);
 }
@@ -89,9 +130,9 @@ uint8_t float32_substraction_check(uint32_t x, uint32_t y, uint32_t z){
 
     res = float32_addition_substraction(a, b, 1);
 
-    printf("Oper A - 0x%08X \t %e\n", a.lword, a.fword);
-    printf("Oper B - 0x%08X \t %e\n", b.lword, b.fword);
-    printf("Result - 0x%08X \t %e\n", res.lword, res.fword);
+    debug("Oper A - 0x%08X \t %e\n", a.lword, a.fword);
+    debug("Oper B - 0x%08X \t %e\n", b.lword, b.fword);
+    debug("Result - 0x%08X \t %e\n", res.lword, res.fword);
 
     return float32_compare(exp, res);
 }
@@ -100,39 +141,39 @@ Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
     Float32 tmp_x, tmp_y, tmp_r ,result;
 
     // for the uint8_t operation selector 0 means adding, 1 means substracting
-    y.My.Sign     = (operation > 0) ^ y.My.Sign;
+    setSign( &y , operation ^ getSign(y) );
 
-    tmp_x.lword = x.My.Mantissa;
-    tmp_y.lword = y.My.Mantissa;
+    tmp_x.lword = getMantissa(x);
+    tmp_y.lword = getMantissa(y);
 
     tmp_x.byte[2] |= 0x80;
     tmp_y.byte[2] |= 0x80;
 
-    if(x.My.Exponent < y.My.Exponent){
-        //Shift the mantissa of the smallest operator to align with the biggest.
-        tmp_x.lword >>= y.My.Exponent - x.My.Exponent;
-
-        //Set the biggest exponent to the result exponent
-        result.My.Exponent = y.My.Exponent;
-    }
-    else{
-        //Shift the mantissa of the smallest operator to align with the biggest.
-        tmp_y.lword >>= x.My.Exponent - y.My.Exponent;
-
-        //Set the biggest exponent to the result exponent
-        result.My.Exponent = x.My.Exponent;
-    }
-
     tmp_x.lword = float32_shiftL8(tmp_x).lword >> 1;
 	tmp_y.lword = float32_shiftL8(tmp_y).lword >> 1;
 
-    if(tmp_x.lword >= tmp_y.lword){
-        result.My.Sign = x.My.Sign;
-        tmp_r.lword = x.My.Sign ^ y.My.Sign ? tmp_x.lword - tmp_y.lword : tmp_x.lword + tmp_y.lword;
+    if( getExponent(x) < getExponent(y) ){
+        //Shift the mantissa of the smallest operator to align with the biggest.
+        tmp_x.lword >>= getExponent(y) - getExponent(x);
+
+        //Set the biggest exponent to the result exponent
+        setExponent( &result, getExponent(y) );
     }
     else{
-        result.My.Sign = y.My.Sign;
-        tmp_r.lword = x.My.Sign ^ y.My.Sign ? tmp_y.lword - tmp_x.lword : tmp_y.lword + tmp_x.lword;
+        //Shift the mantissa of the smallest operator to align with the biggest.
+        tmp_y.lword >>= getExponent(x) - getExponent(y);
+
+        //Set the biggest exponent to the result exponent
+        setExponent( &result , getExponent(x) );
+    }
+
+    if( tmp_x.lword >= tmp_y.lword ){
+        setSign( &result , getSign(x) );
+        tmp_r.lword = getSign(x) ^ getSign(y) ? tmp_x.lword - tmp_y.lword : tmp_x.lword + tmp_y.lword;
+    }
+    else{
+        setSign( &result , getSign(y) );
+        tmp_r.lword = getSign(x) ^ getSign(y) ? tmp_y.lword - tmp_x.lword : tmp_y.lword + tmp_x.lword;
     }
 
 	tmp_r.lword >>= 7;
@@ -140,19 +181,23 @@ Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
     //Adjust Exponent and Mantissa
     while((tmp_r.byte[2]&0x80) == 0 || tmp_r.byte[3] > 0){
         if(tmp_r.byte[3] > 0){
-            debug("[ ADJUST ] Cocient: Shift Right\n");
-            ++result.My.Exponent;
+            printf("[ ADJUST ] Cocient: Shift Right\n");
+            setExponent( &result , (getExponent(result)+1) );
             tmp_r.lword >>= 1;
+			debug("[ Hex Val  ]: 0x%08X\n", tmp_r.lword);
+			system("sleep 5");
         }
         else{
-            debug("[ ADJUST ] Cocient: Shift left\n");
-            --result.My.Exponent;
+            printf("[ ADJUST ] Cocient: Shift left\n");
+            setExponent( &result , (getExponent(result)-1) );
             tmp_r.lword <<= 1;
+			debug("[ Hex Val  ]: 0x%08X\n", tmp_r.lword);
+			system("sleep 5");
         }
     }
 
-    result.My.Mantissa = tmp_r.My.Mantissa;
-    debug("OUR RESULT %08x\n",result.lword);
+    setMantissa( &result , getMantissa(tmp_r));
+    printf("OUR RESULT %08x\n",result.lword);
     return result;
 }
 
@@ -171,13 +216,13 @@ Float32 float32_multiply(Float32 a, Float32 b){
 
     // Test for Zero
     if(float32_isZero(a) || float32_isZero(b)){
-        Cr.My.Sign = (a.My.Sign ^ b.My.Sign);
+        setSign( &Cr, getSign(a) ^ getSign(b) );
         debug("Multiply by Zero\n");
         return Cr;
     }
 
-    Am.lword = a.My.Mantissa;
-    Bm.lword = b.My.Mantissa;
+    Am.lword = getMantissa(a);
+    Bm.lword = getMantissa(b);
 
     // Insert Implicit Ones
     Am.byte[2] |= 0x80;
@@ -212,19 +257,19 @@ Float32 float32_multiply(Float32 a, Float32 b){
 
     // Normalize (if needed)
     if(Cr.byte[2] & 0x80){
-        Cr.My.Exponent = 1;
+        setExponent( &Cr, 1 );
     }
     else{
         debug("Ajuste de mantiza!\n");
         Cr.lword <<= 1;
         Cr.byte[0] = (tmp & 0x80) ? Cr.byte[0] | 0x01 : Cr.byte[0] & 0xFE;
         debug("Ultimo   = %08x\n", Cr.lword);
-        Cr.My.Exponent = 0;
+        setExponent( &Cr, 0 );
     }
 
     // Calculate Exponent and Sign
-    Cr.My.Exponent += (uint16_t)a.My.Exponent + b.My.Exponent - 127;
-    Cr.My.Sign = (a.My.Sign ^ b.My.Sign);
+    setExponent( &Cr, (uint16_t)getExponent(Cr) + getExponent(a) + getExponent(b) - 127 );
+    setSign( &Cr, getSign(a) ^ getSign(b) );
 
     return Cr;
 }
@@ -245,18 +290,18 @@ uint8_t float32_divide_check(uint32_t x, uint32_t y, uint32_t z){
 Float32 float32_divide(Float32 x, Float32 y ){
     //Performs the x/y float division
     Float32 dividend, divisor, cocient;
-    uint16_t tmp_exp;
+    uint8_t tmp_exp;
     uint8_t  i;
 
     // Make Implicit 1, Explicit!
-    dividend.lword = x.My.Mantissa;
-    divisor.lword  = y.My.Mantissa;
+    dividend.lword = getMantissa(x);
+    divisor.lword  = getMantissa(y);
     dividend.byte[2] |= 0x80;
     divisor.byte[2]  |= 0x80;
     cocient.lword  = 0;
 
     //Calculate Exponent
-    tmp_exp = 126 + x.My.Exponent - y.My.Exponent;
+    tmp_exp = (uint16_t)126 + getExponent(x) - getExponent(y);
 
     //Perform Division
     if(dividend.lword == divisor.lword){
@@ -268,7 +313,7 @@ Float32 float32_divide(Float32 x, Float32 y ){
         for(i=3 ; i > 0 ; --i){
             dividend = float32_shiftL8(dividend);
             //Weak point here maybe
-            cocient.lword  = float32_shiftL8(cocient).lword |(dividend.lword/divisor.lword);
+            cocient.lword  = float32_shiftL8(cocient).lword +(dividend.lword/divisor.lword);
             dividend.lword = dividend.lword % divisor.lword;
             if(dividend.lword == 0) //The job is done =)
                 break;
@@ -289,8 +334,8 @@ Float32 float32_divide(Float32 x, Float32 y ){
     }
 
     //Place It All Together
-    cocient.My.Exponent = tmp_exp;
-    cocient.My.Sign     = x.My.Sign ^ y.My.Sign;
+    setExponent( &cocient, tmp_exp );
+    setSign( &cocient, getSign(x) ^ getSign(y) );
     return cocient;
 }
 
@@ -304,15 +349,15 @@ uint8_t float32_multiply_check(uint32_t x, uint32_t y, uint32_t z){
 
     res = float32_multiply(a, b);
 
-    printf("Oper A - 0x%08X \t %e\n", a.lword, a.fword);
-    printf("Oper B - 0x%08X \t %e\n", b.lword, b.fword);
-    printf("Result - 0x%08X \t %e\n", res.lword, res.fword);
+    debug("Oper A - 0x%08X \t %e\n", a.lword, a.fword);
+    debug("Oper B - 0x%08X \t %e\n", b.lword, b.fword);
+    debug("Result - 0x%08X \t %e\n", res.lword, res.fword);
 
     return float32_compare(exp, res);
 }
 
 int usage(){
-    printf("Invalid Usage!! flotante.exe oper num1 num2 result\n");
+    debug("Invalid Usage!! flotante.exe oper num1 num2 result\n");
     exit(EXIT_FAILURE);
 }
 
@@ -327,7 +372,7 @@ int main(int argc, char *argv[]) {
 
     opt = argv[1][0];
     if (opt != 'm' && opt != 'd' && opt != 'a' && opt != 's'){
-        printf("Unrecognized Argument %s -", argv[1]);
+        debug("Unrecognized Argument %s -", argv[1]);
         usage(argv[0]);
     }
 
