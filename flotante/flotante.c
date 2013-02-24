@@ -59,7 +59,7 @@ void setMantissa(Float32 *a, uint32_t value){
 -----------------------------------------------------*/
 
 uint8_t float32_isZero(Float32 p){
-    if(p.My.Exponent == 0 && p.My.Mantissa == 0)
+    if(getExponent(p) == 0 && getMantissa(p) == 0)
        return TRUE;
     else
         return FALSE;
