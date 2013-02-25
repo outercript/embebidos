@@ -3,7 +3,7 @@
 #endif
 
 typedef unsigned char  uint8_t ;
-typedef unsigned int   uint16_t;
+typedef unsigned short uint16_t;
 typedef unsigned long  uint32_t;
 
 
@@ -18,7 +18,7 @@ typedef union {
 typedef struct{
   char op;
   Float32 op1;
-  Float32 op2; 
+  Float32 op2;
 }Float32_eqn;
 
 
