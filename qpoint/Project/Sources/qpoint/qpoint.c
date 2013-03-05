@@ -77,56 +77,37 @@ Qpoint qpoint_addition_substraction(Qpoint x, Qpoint y, uint8_t operation){
 
 /*********   Multiplication Algorithm    ************/
 
-Qpoint qpoint_multiply(Qpoint a, Qpoint b){
-    uint8_t tmp;
-    Qpoint Am, Bm, Cr;
-
-    Cr.lword = 0;
+Qpoint qpoint_multiply(Qpoint a, uint8_t Qa, Qpoint b, uint8_t Qb, uint8_t Qr){
+    uint32_t    tmp;
+    uint8_t     Qtmp, is_negative;
+    tmp =   0;
+    Qtmp =  0;
+    is_negative = 0;
 
     // Test for Zero
-    if(qpoint_isZero(a) || qpoint_isZero(b)){
-        setSign( &Cr, getSign(a) ^ getSign(b) );
-        return Cr;
-    }
+    if(Qa == 0 || Qb == 0)
+        return 0;
 
-    Am.lword = getMantissa(a);
-    Bm.lword = getMantissa(b);
+    // Check Sign and complement operands as needed
+    is_negative = (a.dbyte & 0xF0) == (b.dbyte & 0xF0) ? 0 : 1;
+    if(a.dbyte & 0xF0)
+        a.dbyte = complement(a.dbyte)
+    if(b.dbyte & 0xF0)
+        b.dbyte = complement(b.dbyte)
 
-    // Insert Implicit Ones
-    Am.byte.b2 |= 0x80;
-    Bm.byte.b2 |= 0x80;
+    // Get the resultant Q and the multiplication result
+    Qtmp = Qa + Qb
+    tmp = (uint32_t)a.dbyte * b.dbyte;
 
-    // Calculate Mantissa
-    Cr.lword = (uint32_t)Am.dbyte.b0 * Bm.dbyte.b0;
-    Cr.dbyte.b0 = Cr.dbyte.b1;
-    Cr.dbyte.b1 = 0;
 
-    Cr.lword += (uint32_t)Am.dbyte.b0 * Bm.byte.b2;
-    Cr.lword += (uint32_t)Bm.dbyte.b0 * Am.byte.b2;
+    // Normalize the result
 
-    Cr.dbyte.b1 += Am.byte.b2 * Bm.byte.b2;
-
-    // Save the Less Significant Byte,
-    // will need it when mantissa is adjusted
-    tmp = Cr.byte.b0;
-
-    Cr = qpoint_shiftR8(Cr);
-
-    // Normalize (if needed)
-    if(Cr.byte.b2 & 0x80){
-        setExponent( &Cr, 1 );
-    }
-    else{
-        Cr.lword <<= 1;
-        Cr.byte.b0 = (tmp & 0x80) ? Cr.byte.b0 | 0x01 : Cr.byte.b0 & 0xFE;
-        setExponent( &Cr, 0 );
-    }
 
     // Calculate Exponent and Sign
-    setExponent( &Cr, (uint16_t)getExponent(Cr) + getExponent(a) + getExponent(b) - 127 );
-    setSign( &Cr, getSign(a) ^ getSign(b) );
+    if(is_negative)
+        tmp = complement(tmp)
 
-    return Cr;
+    return tmp;
 }
 
 
