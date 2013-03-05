@@ -6,14 +6,25 @@ typedef unsigned char  uint8_t ;
 typedef unsigned short uint16_t;
 typedef unsigned long  uint32_t;
 
-
+typedef struct{
+  uint8_t b3;
+  uint8_t b2;
+  uint8_t b1;
+  uint8_t b0;
+}byte_wa;
+typedef struct{
+  uint16_t b1;
+  uint16_t b0;
+}dbyte_wa;
 
 
 typedef union {
-    uint8_t  byte[4];
-    uint16_t dbyte[2];
+    byte_wa  byte;
+    dbyte_wa dbyte;
     uint32_t lword;
 }Float32;
+
+
 
 typedef struct{
   char op;
@@ -31,7 +42,7 @@ Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation);
 Float32 float32_divide(Float32 x, Float32 y);
 
 //Freescale WA stuff
-#define getSign(x) ((x.byte[3]&0x80)>0)
+#define getSign(x) ((x.byte.b3&0x80)>0)
 uint8_t  getExponent(Float32 a);
 uint32_t getMantissa(Float32 a);
 

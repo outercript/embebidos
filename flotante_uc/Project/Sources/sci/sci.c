@@ -207,7 +207,9 @@ void SendHexValue(unsigned char SCI_PORT, unsigned char hex_value)
 void Float32_Test(unsigned char SCI_PORT, char *buff)
 {
   Float32_eqn tmp;  
-  if(buff[0] == '0' && buff[1] == 'x' && buff[11] == '0' && buff[12] == 'x' && isValidOper(buff[10])){
+  if(buff[0]  == '0' && (buff[1]  == 'x' || buff[1]  == 'X') &&
+     buff[11] == '0' && (buff[12] == 'x' || buff[12] == 'X') && isValidOper(buff[10])){
+     
     tmp.op1 = ascii2Float32(buff,2);
     tmp.op2 = ascii2Float32(buff,13);
     tmp.op  = buff[10];
@@ -224,10 +226,13 @@ Float32 ascii2Float32(char buff [30] , uint8_t index)
 {
   Float32 tmp;
   uint8_t i;
+  uint8_t *strup;
+  strup = &tmp.byte.b3;
   for (i=0 ; i < 4 ; i++) 
   {
-     tmp.byte[i] = ConvertAsciiChar(buff[index + i*2]) << 4;
-     tmp.byte[i]|= ConvertAsciiChar(buff[index + 1 + i*2]);
+     *strup  = ConvertAsciiChar(buff[index + i*2]) << 4;
+     *strup |= ConvertAsciiChar(buff[index + 1 + i*2]);
+     strup++;
   }
   return tmp;
 }
@@ -255,11 +260,14 @@ Float32 runTest(Float32_eqn equino){
 
 void sendFloat32(unsigned char SCI_PORT, Float32 f){
   uint8_t hex_L, hex_H, hex_value, i;
-  
+  uint8_t *strup;
   (void)SendString(SCI_PORT, "0x");
-  
+  strup = &f.byte.b3;
   for (i=0 ; i < 4 ; i++){
-    hex_value = f.byte[3 - i];
+    // b3 is the first byte in the struct 'byte' 
+    // so we increment the pointer to get to b2 and so on
+    hex_value = (*strup);
+    strup++;
     hex_L = hex_value & 0x0F;
     hex_H = hex_value>>4;
     (void)SCISendBuffer(SCI_PORT, ConvertCharAscii(hex_H));

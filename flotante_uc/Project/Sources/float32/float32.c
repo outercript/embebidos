@@ -10,34 +10,34 @@
 /* Getters */
 
     uint8_t getExponent(Float32 a){
-        a.byte[0] = (a.byte[3]<<1)|((a.byte[2]&0x80)>0);
-        return a.byte[0];
+        a.byte.b0 = (a.byte.b3<<1)|((a.byte.b2&0x80)>0);
+        return a.byte.b0;
     }
     
     uint32_t getMantissa(Float32 a){
-        a.byte[3] = 0;
-        a.byte[2] = a.byte[2]&0x7F;
+        a.byte.b3 = 0;
+        a.byte.b2 = a.byte.b2&0x7F;
         return a.lword;
     }
 
 /* Setters */
 
     void setSign(Float32 *a, uint8_t value){
-        (*a).byte[3] = value > 0 ? (*a).byte[3]|0x80 : (*a).byte[3]&0x7F ;
+        (*a).byte.b3 = value > 0 ? (*a).byte.b3|0x80 : (*a).byte.b3&0x7F ;
     }
     
     void setExponent(Float32 *a, uint8_t value){
         
-        (*a).byte[3] = ((*a).byte[3]&0x80)|(value>>1);
-        (*a).byte[2] = ((*a).byte[2]&0x7F)|(value<<7);
+        (*a).byte.b3 = ((*a).byte.b3&0x80)|(value>>1);
+        (*a).byte.b2 = ((*a).byte.b2&0x7F)|(value<<7);
         
     }
 
     void setMantissa(Float32 *a, uint32_t value){
         Float32 tmp;
         tmp.lword = value;
-        (*a).byte[2]  = (((*a).byte[2])&0x80)|(tmp.byte[2]&0x7F);
-        (*a).dbyte[0] = tmp.dbyte[0];
+        (*a).byte.b2  = (((*a).byte.b2)&0x80)|(tmp.byte.b2&0x7F);
+        (*a).dbyte.b0 = tmp.dbyte.b0;
     }
 
 /*----------------------------------------------------
@@ -45,18 +45,18 @@
 -----------------------------------------------------*/
 
 Float32 float32_shiftL8(Float32 x){
-    x.byte[3] = x.byte[2];
-    x.byte[2] = x.byte[1];
-    x.byte[1] = x.byte[0];
-    x.byte[0] = 0;
+    x.byte.b3 = x.byte.b2;
+    x.byte.b2 = x.byte.b1;
+    x.byte.b1 = x.byte.b0;
+    x.byte.b0 = 0;
     return x;
 }
 
 Float32 float32_shiftR8(Float32 x){
-    x.byte[0] = x.byte[1];
-    x.byte[1] = x.byte[2];
-    x.byte[2] = x.byte[3];
-    x.byte[3] = 0;
+    x.byte.b0 = x.byte.b1;
+    x.byte.b1 = x.byte.b2;
+    x.byte.b2 = x.byte.b3;
+    x.byte.b3 = 0;
     return x;
 }
 
@@ -79,8 +79,8 @@ Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
     tmp_x.lword = getMantissa(x);
     tmp_y.lword = getMantissa(y);
 
-    tmp_x.byte[2] |= 0x80;
-    tmp_y.byte[2] |= 0x80;
+    tmp_x.byte.b2 |= 0x80;
+    tmp_y.byte.b2 |= 0x80;
     
     tmp_x.lword = float32_shiftL8(tmp_x).lword >> 1;
   	tmp_y.lword = float32_shiftL8(tmp_y).lword >> 1;
@@ -112,8 +112,8 @@ Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
 	  tmp_r.lword >>= 7;
 
     //Adjust Exponent and Mantissa
-    while((tmp_r.byte[2]&0x80) == 0 || tmp_r.byte[3] > 0){
-        if(tmp_r.byte[3] > 0){
+    while((tmp_r.byte.b2&0x80) == 0 || tmp_r.byte.b3 > 0){
+        if(tmp_r.byte.b3 > 0){
             setExponent( &result , getExponent(result)+1 );
             tmp_r.lword >>= 1;
         }
@@ -146,32 +146,32 @@ Float32 float32_multiply(Float32 a, Float32 b){
     Bm.lword = getMantissa(b);
 
     // Insert Implicit Ones
-    Am.byte[2] |= 0x80;
-    Bm.byte[2] |= 0x80;
+    Am.byte.b2 |= 0x80;
+    Bm.byte.b2 |= 0x80;
                    
     // Calculate Mantissa
-    Cr.lword = Am.dbyte[0] * Bm.dbyte[0];
-    Cr.dbyte[0] = Cr.dbyte[1];
-    Cr.dbyte[1] = 0;
+    Cr.lword = (uint32_t)Am.dbyte.b0 * Bm.dbyte.b0;
+    Cr.dbyte.b0 = Cr.dbyte.b1;
+    Cr.dbyte.b1 = 0;
 
-    Cr.lword += Am.dbyte[0] * Bm.byte[2];
-    Cr.lword += Bm.dbyte[0] * Am.byte[2];
+    Cr.lword += (uint32_t)Am.dbyte.b0 * Bm.byte.b2;
+    Cr.lword += (uint32_t)Bm.dbyte.b0 * Am.byte.b2;
 
-    Cr.dbyte[1] += Am.byte[2] * Bm.byte[2];
+    Cr.dbyte.b1 += Am.byte.b2 * Bm.byte.b2;
 
     // Save the Less Significant Byte,
     // will need it when mantissa is adjusted
-    tmp = Cr.byte[0];
+    tmp = Cr.byte.b0;
 
     Cr = float32_shiftR8(Cr);
 
     // Normalize (if needed)
-    if(Cr.byte[2] & 0x80){
+    if(Cr.byte.b2 & 0x80){
         setExponent( &Cr, 1 );
     }
     else{
         Cr.lword <<= 1;
-        Cr.byte[0] = (tmp & 0x80) ? Cr.byte[0] | 0x01 : Cr.byte[0] & 0xFE;
+        Cr.byte.b0 = (tmp & 0x80) ? Cr.byte.b0 | 0x01 : Cr.byte.b0 & 0xFE;
         setExponent( &Cr, 0 );
     }
 
@@ -194,8 +194,8 @@ Float32 float32_divide(Float32 x, Float32 y ){
     // Make Implicit 1, Explicit!
     dividend.lword = getMantissa(x); 
     divisor.lword  = getMantissa(y); 
-    dividend.byte[2] |= 0x80;
-    divisor.byte[2]  |= 0x80;
+    dividend.byte.b2 |= 0x80;
+    divisor.byte.b2  |= 0x80;
     cocient.lword  = 0;
 
     //Calculate Exponent
@@ -204,7 +204,7 @@ Float32 float32_divide(Float32 x, Float32 y ){
     //Perform Division
     if(dividend.lword == divisor.lword){
         ++tmp_exp;
-        cocient.byte[2] = 0x80; 
+        cocient.byte.b2 = 0x80; 
     }
     else{
         for(i=3 ; i > 0 ; --i){
@@ -218,8 +218,8 @@ Float32 float32_divide(Float32 x, Float32 y ){
     }
     
     //Adjust Exponent and Mantissa
-    while((cocient.byte[2]&0x80) == 0 || cocient.byte[3] > 0){
-        if(cocient.byte[3] > 0){
+    while((cocient.byte.b2&0x80) == 0 || cocient.byte.b3 > 0){
+        if(cocient.byte.b3 > 0){
             ++tmp_exp;
             cocient.lword >>= 1;
         }
