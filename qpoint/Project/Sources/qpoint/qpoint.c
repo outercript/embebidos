@@ -1,50 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "float32.h"
+#include "qpoint.h"
 
 
-/*----------------------------------------------------
-    WA for shitty freescale religious code thingys
------------------------------------------------------*/
-
-/* Getters */
-
-    uint8_t getExponent(Float32 a){
-        a.byte.b0 = (a.byte.b3<<1)|((a.byte.b2&0x80)>0);
-        return a.byte.b0;
-    }
-    
-    uint32_t getMantissa(Float32 a){
-        a.byte.b3 = 0;
-        a.byte.b2 = a.byte.b2&0x7F;
-        return a.lword;
-    }
-
-/* Setters */
-
-    void setSign(Float32 *a, uint8_t value){
-        (*a).byte.b3 = value > 0 ? (*a).byte.b3|0x80 : (*a).byte.b3&0x7F ;
-    }
-    
-    void setExponent(Float32 *a, uint8_t value){
-        
-        (*a).byte.b3 = ((*a).byte.b3&0x80)|(value>>1);
-        (*a).byte.b2 = ((*a).byte.b2&0x7F)|(value<<7);
-        
-    }
-
-    void setMantissa(Float32 *a, uint32_t value){
-        Float32 tmp;
-        tmp.lword = value;
-        (*a).byte.b2  = (((*a).byte.b2)&0x80)|(tmp.byte.b2&0x7F);
-        (*a).dbyte.b0 = tmp.dbyte.b0;
-    }
-
-/*----------------------------------------------------
-    End of Freescale shitty religious code thingys WA
------------------------------------------------------*/
-
-Float32 float32_shiftL8(Float32 x){
+Qpoint qpoint_shiftL8(Qpoint x){
     x.byte.b3 = x.byte.b2;
     x.byte.b2 = x.byte.b1;
     x.byte.b1 = x.byte.b0;
@@ -52,7 +11,7 @@ Float32 float32_shiftL8(Float32 x){
     return x;
 }
 
-Float32 float32_shiftR8(Float32 x){
+Qpoint qpoint_shiftR8(Qpoint x){
     x.byte.b0 = x.byte.b1;
     x.byte.b1 = x.byte.b2;
     x.byte.b2 = x.byte.b3;
@@ -61,7 +20,7 @@ Float32 float32_shiftR8(Float32 x){
 }
 
 
-uint8_t float32_isZero(Float32 p){
+uint8_t qpoint_isZero(Qpoint p){
     if(getExponent(p) == 0 && getMantissa(p) == 0)
        return TRUE;
     else
@@ -70,9 +29,9 @@ uint8_t float32_isZero(Float32 p){
 
 /*********   Addition/Substraction Algorithm    ************/
 
-Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
-    Float32 tmp_x, tmp_y, tmp_r ,result;
-    
+Qpoint qpoint_addition_substraction(Qpoint x, Qpoint y, uint8_t operation){
+    Qpoint tmp_x, tmp_y, tmp_r ,result;
+
     // for the uint8_t operation selector 0 means adding, 1 means substracting
     setSign( &y , (operation>0) ^ getSign(y) );
 
@@ -81,9 +40,9 @@ Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
 
     tmp_x.byte.b2 |= 0x80;
     tmp_y.byte.b2 |= 0x80;
-    
-    tmp_x.lword = float32_shiftL8(tmp_x).lword >> 1;
-  	tmp_y.lword = float32_shiftL8(tmp_y).lword >> 1;
+
+    tmp_x.lword = qpoint_shiftL8(tmp_x).lword >> 1;
+  	tmp_y.lword = qpoint_shiftL8(tmp_y).lword >> 1;
 
     if( getExponent(x) < getExponent(y) ){
         //Shift the mantissa of the smallest operator to align with the biggest.
@@ -130,14 +89,14 @@ Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation){
 
 /*********   Multiplication Algorithm    ************/
 
-Float32 float32_multiply(Float32 a, Float32 b){
+Qpoint qpoint_multiply(Qpoint a, Qpoint b){
     uint8_t tmp;
-    Float32 Am, Bm, Cr;
+    Qpoint Am, Bm, Cr;
 
     Cr.lword = 0;
-    
+
     // Test for Zero
-    if(float32_isZero(a) || float32_isZero(b)){
+    if(qpoint_isZero(a) || qpoint_isZero(b)){
         setSign( &Cr, getSign(a) ^ getSign(b) );
         return Cr;
     }
@@ -148,7 +107,7 @@ Float32 float32_multiply(Float32 a, Float32 b){
     // Insert Implicit Ones
     Am.byte.b2 |= 0x80;
     Bm.byte.b2 |= 0x80;
-                   
+
     // Calculate Mantissa
     Cr.lword = (uint32_t)Am.dbyte.b0 * Bm.dbyte.b0;
     Cr.dbyte.b0 = Cr.dbyte.b1;
@@ -163,7 +122,7 @@ Float32 float32_multiply(Float32 a, Float32 b){
     // will need it when mantissa is adjusted
     tmp = Cr.byte.b0;
 
-    Cr = float32_shiftR8(Cr);
+    Cr = qpoint_shiftR8(Cr);
 
     // Normalize (if needed)
     if(Cr.byte.b2 & 0x80){
@@ -185,15 +144,15 @@ Float32 float32_multiply(Float32 a, Float32 b){
 
 /*********   Division Algorithm    ************/
 
-Float32 float32_divide(Float32 x, Float32 y ){
+Qpoint qpoint_divide(Qpoint x, Qpoint y ){
 	//Performs the x/y float division
-    Float32 dividend, divisor, cocient;
+    Qpoint dividend, divisor, cocient;
     uint8_t tmp_exp;
     uint8_t  i;
 
     // Make Implicit 1, Explicit!
-    dividend.lword = getMantissa(x); 
-    divisor.lword  = getMantissa(y); 
+    dividend.lword = getMantissa(x);
+    divisor.lword  = getMantissa(y);
     dividend.byte.b2 |= 0x80;
     divisor.byte.b2  |= 0x80;
     cocient.lword  = 0;
@@ -204,19 +163,19 @@ Float32 float32_divide(Float32 x, Float32 y ){
     //Perform Division
     if(dividend.lword == divisor.lword){
         ++tmp_exp;
-        cocient.byte.b2 = 0x80; 
+        cocient.byte.b2 = 0x80;
     }
     else{
         for(i=3 ; i > 0 ; --i){
-            dividend = float32_shiftL8(dividend);
+            dividend = qpoint_shiftL8(dividend);
             //Weak point here maybe
-            cocient.lword  = float32_shiftL8(cocient).lword |(dividend.lword/divisor.lword);
+            cocient.lword  = qpoint_shiftL8(cocient).lword |(dividend.lword/divisor.lword);
             dividend.lword = dividend.lword % divisor.lword;
             if(dividend.lword == 0) //The job is done =)
                 break;
         }
     }
-    
+
     //Adjust Exponent and Mantissa
     while((cocient.byte.b2&0x80) == 0 || cocient.byte.b3 > 0){
         if(cocient.byte.b3 > 0){

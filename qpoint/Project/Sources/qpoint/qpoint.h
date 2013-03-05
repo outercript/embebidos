@@ -1,6 +1,5 @@
-#ifndef FLOAT_LIB
-#define FLOAT_LIB
-#endif
+#ifndef QPOINT_LIB
+#define QPOINT_LIB
 
 typedef unsigned char  uint8_t ;
 typedef unsigned short uint16_t;
@@ -12,6 +11,7 @@ typedef struct{
   uint8_t b1;
   uint8_t b0;
 }byte_wa;
+
 typedef struct{
   uint16_t b1;
   uint16_t b0;
@@ -22,30 +22,23 @@ typedef union {
     byte_wa  byte;
     dbyte_wa dbyte;
     uint32_t lword;
-}Float32;
+}Qpoint;
 
 
 
 typedef struct{
   char op;
-  Float32 op1;
-  Float32 op2;
-}Float32_eqn;
+  Qpoint op1;
+  Qpoint op2;
+}Qpoint_eqn;
 
 
 // Function Prototypes
-Float32 float32_shiftL8(Float32 x);
-Float32 float32_shiftR8(Float32 x);
-uint8_t float32_isZero(Float32 p);
-Float32 float32_multiply(Float32 a, Float32 b);
-Float32 float32_addition_substraction(Float32 x, Float32 y, uint8_t operation);
-Float32 float32_divide(Float32 x, Float32 y);
+Qpoint qpoint_shiftL8(Qpoint x);
+Qpoint qpoint_shiftR8(Qpoint x);
+uint8_t qpoint_isZero(Qpoint p);
+Qpoint qpoint_multiply(Qpoint a, Qpoint b);
+Qpoint qpoint_addition_substraction(Qpoint x, Qpoint y, uint8_t operation);
+Qpoint qpoint_divide(Qpoint x, Qpoint y);
 
-//Freescale WA stuff
-#define getSign(x) ((x.byte.b3&0x80)>0)
-uint8_t  getExponent(Float32 a);
-uint32_t getMantissa(Float32 a);
-
-void setSign(Float32 *a, uint8_t value);
-void setExponent(Float32 *a, uint8_t  value);
-void setMantissa(Float32 *a, uint32_t value);
+#endif
