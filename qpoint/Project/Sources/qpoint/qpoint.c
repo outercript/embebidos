@@ -4,8 +4,6 @@
 
 
 Qpoint qpoint_shiftL8(Qpoint x){
-    x.byte.b3 = x.byte.b2;
-    x.byte.b2 = x.byte.b1;
     x.byte.b1 = x.byte.b0;
     x.byte.b0 = 0;
     return x;
@@ -13,18 +11,8 @@ Qpoint qpoint_shiftL8(Qpoint x){
 
 Qpoint qpoint_shiftR8(Qpoint x){
     x.byte.b0 = x.byte.b1;
-    x.byte.b1 = x.byte.b2;
-    x.byte.b2 = x.byte.b3;
-    x.byte.b3 = 0;
+    x.byte.b1 = 0;
     return x;
-}
-
-
-uint8_t qpoint_isZero(Qpoint p){
-    if(getExponent(p) == 0 && getMantissa(p) == 0)
-       return TRUE;
-    else
-        return FALSE;
 }
 
 /*********   Addition/Substraction Algorithm    ************/
