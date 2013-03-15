@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include "sci.h"
+#include "rtc_os.h"
 
 #pragma LINK_INFO DERIVATIVE "MC9S12XEP100"
 
