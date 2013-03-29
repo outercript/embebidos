@@ -21,8 +21,9 @@ void OSInit(void){
 
 
 void main(void) {
-	
-    OSInit();    
+
+    OSInit();
+
 
     //EnableInterrupts;
     
