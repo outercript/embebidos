@@ -1,36 +1,37 @@
 #include "rtc_os.h"
 
-static uint8_t TASK_COUNTER;
+static uint8_t  TASK_COUNTER;
 static Task Task_list[TASK_LIMIT];
 
-void init_tasks(){
+void init_tasks(void){
   uint8_t index;
   for(index = 0; index < TASK_LIMIT; index++){
       // Initialize the task
       Task_list[index].autostart = FALSE;
       Task_list[index].priority  = 0;
       Task_list[index].pc_start  = 0;
-      Task_list[index].pc_actual = 0;
       Task_list[index].sp_start  = 0;
-      Task_list[index].sp_actual = 0;
+      Task_list[index].pc_continue = 0;
+      Task_list[index].sp_continue = 0;
       Task_list[index].status = TASK_IDLE; 
   }
   TASK_COUNTER=0;
 }
 
-void add_task(_fptr funct, Bool autostart, uint8_t priority){
+void add_task(_fptr funct, uint8_t args){
+  
   // Prevent adding more tasks than we can allocate
   if(TASK_COUNTER >= TASK_LIMIT)
     //Error too many tasks
     return;
   
   // Initialize the task
-  Task_list[TASK_COUNTER].autostart = autostart;
-  Task_list[TASK_COUNTER].priority  = priority;
+  Task_list[TASK_COUNTER].autostart = args&0x80;
+  Task_list[TASK_COUNTER].priority  = args&0x7F;
   Task_list[TASK_COUNTER].pc_start  = funct;
    
   // Autostart tasks must be set to READY
-  if(autostart)
+  if(args&0x80)
     Task_list[TASK_COUNTER].status = TASK_READY;
  
   TASK_COUNTER++;

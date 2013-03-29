@@ -6,7 +6,7 @@
 typedef unsigned char uint8_t;
 typedef unsigned int  uint16_t;
 
-#define AUTOSTART TRUE
+#define AUTOSTART (0x80)
 
 
 typedef void (*_fptr)(void);
@@ -15,10 +15,10 @@ typedef struct{
   Bool      autostart;
   uint8_t   priority;
   uint8_t   status;
-  _fptr  pc_start;
-  _fptr  pc_actual;
-  _fptr  sp_start;
-  _fptr  sp_actual;
+  _fptr     pc_start;
+  uint16_t  *pc_continue;
+  uint16_t  *sp_start;
+  uint16_t  *sp_continue;
 }Task;
 
 
@@ -32,8 +32,15 @@ enum{
 
 #define TASK_LIMIT    (10)
 
-void add_task(_fptr funct, Bool autostart, uint8_t priority);
+/* GLOBALS */
+extern uint8_t ACTIVE_TASK_ID;
+extern uint16_t *RegisterHolder;
+
+void add_task(_fptr funct, uint8_t args);
 void task_scheduler(void);
+void init_tasks(void);
 void activate_task(_fptr ptask);
+void terminate_task(void);
+void run_task(uint8_t task_id);
 
 #endif
