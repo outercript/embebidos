@@ -110,7 +110,7 @@ void run_task(uint8_t task_id){
       ACTIVE_TASK_ID = task_id;
        
       if(Task_list[task_id].pc_continue){
-         RegisterHolder = Task_list[task_id].sp_start;
+         RegisterHolder = Task_list[task_id].sp_continue;
          // Despues de esto perderemos nuestras variables locales
          _asm{
             LDS RegisterHolder                 ; Regresa el SP al lugar en que se
