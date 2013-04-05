@@ -3,6 +3,13 @@
 static uint8_t  TASK_COUNTER;
 static Task Task_list[TASK_LIMIT];
 
+
+void OSInit(void){
+    init_tasks();
+    ISR_FLAG;
+    EnableInterrupts;  
+}
+
 void init_tasks(void){
   uint8_t index;
   for(index = 0; index < TASK_LIMIT; index++){
@@ -16,6 +23,7 @@ void init_tasks(void){
       Task_list[index].status = TASK_IDLE; 
   }
   TASK_COUNTER=0;
+  
 }
 
 void add_task(_fptr funct, uint8_t args){
@@ -35,11 +43,13 @@ void add_task(_fptr funct, uint8_t args){
     Task_list[TASK_COUNTER].status = TASK_READY;
  
   TASK_COUNTER++;
+  ACTIVE_TASK_ID=TASK_COUNTER;
 }
 
 void activate_task(_fptr ptask){
   uint8_t index;
   uint16_t **start_sp_value;
+  DisableInterrupts; 
   
   //Obtenemos la direccion del stack donde se encuentra
   //guardado el PC de retorno, sin contar la pagina
@@ -75,9 +85,60 @@ void activate_task(_fptr ptask){
          Task_list[index].status = TASK_READY;
          break;
       }
-  } 
+  }
+  EnableInterrupts;  
   task_scheduler();
 }
+
+
+void activate_task_isr(_fptr ptask){
+  uint8_t index;
+  
+  if(ACTIVE_TASK_ID < TASK_COUNTER && Task_list[ACTIVE_TASK_ID].pc_continue == 0){
+    //Obtenemos la direccion del stack donde se encuentra
+    //guardado el PC de retorno, sin contar la pagina
+    _asm{
+      TSX                     ; Guarda el SP en X
+      LEAX 17,X               ; Compensa el espacio de las variables
+                              ; en el stack y apunta a la direccion 
+                              ; del MS byte del PC. (N bytes + 1)
+      STX RegisterHolder      ; Guardamos el SP en la variable
+      STX sp_value            ; Guardamos el SP en la variable
+
+    }
+    
+    
+      
+    //Obtenemos la direccion del PC y apuntamos a ella
+    Task_list[ACTIVE_TASK_ID].pc_continue = *sp_value;
+    *RegisterHolder = (uint16_t)((uint32_t)task_scheduler >> 8) ;
+   
+    // Guarda el valor del SP antes de haber entrado a activate_task()
+    _asm{
+      LDX RegisterHolder      ; Guarda en X el valor del SP inicial
+      LEAX -37,X              ; Compensa el decremento en el SP 
+                              ; de la instrucción CALL
+      STX sp_value            ; Guarda el valor en el apuntador
+    }                   
+    
+    // Guarda el valor del SP en la estructura
+    Task_list[ACTIVE_TASK_ID].sp_continue = sp_value;
+    
+    // Sede el control de la tarea activa
+    Task_list[ACTIVE_TASK_ID].status = TASK_READY;
+  }
+  
+  for(index = 0; index < TASK_COUNTER; index++){
+  
+      // Buscamos la tarea en la lista de tareas... U don't say!
+      if(Task_list[index].pc_start  == ptask){ 
+         Task_list[index].status = TASK_READY;
+         break;
+      }
+  } 
+  //task_scheduler();
+}
+
 
 void task_scheduler(void){ 
   uint8_t index;
@@ -97,9 +158,10 @@ void task_scheduler(void){
   }
 
   // Verificar que es un valor valido
-  if(task_HP_index > TASK_COUNTER)
+  if(task_HP_index > TASK_COUNTER){ 
+    ACTIVE_TASK_ID=TASK_COUNTER;
     return;
-
+  }
   // Pos corrale mijo que va tarde  
   run_task(task_HP_index);
       
@@ -118,6 +180,7 @@ void run_task(uint8_t task_id){
          }
          // Solo usar globales
          RegisterHolder = Task_list[ACTIVE_TASK_ID].pc_continue;
+         Task_list[ACTIVE_TASK_ID].pc_continue = 0;
          _asm{
             LDX RegisterHolder    ; Carga en X el PC del task donde debe regresar
             JMP 0,X               ; Salta al PC del TASK

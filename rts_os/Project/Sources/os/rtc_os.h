@@ -5,6 +5,7 @@
 
 typedef unsigned char uint8_t;
 typedef unsigned int  uint16_t;
+typedef unsigned long  uint32_t;
 
 #define AUTOSTART (0x80)
 
@@ -34,7 +35,9 @@ enum{
 
 /* GLOBALS */
 extern uint8_t ACTIVE_TASK_ID;
+extern volatile uint8_t ISR_FLAG;
 extern uint16_t *RegisterHolder;
+extern uint16_t **sp_value;
 
 void add_task(_fptr funct, uint8_t args);
 void task_scheduler(void);
