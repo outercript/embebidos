@@ -3,31 +3,20 @@
 
 
 void TaskA(void){
-  activate_task(TaskF);
-  terminate_task(); 
+  chain_task(TaskB); 
 }
 
 void TaskB(void){
-  activate_task(TaskC);
+  _asm{
+    NOP
+  }
   terminate_task();
 }
 
 void TaskC(void){
-  activate_task(TaskD);
+  _asm{
+    NOP
+  }
   terminate_task();
 }
 
-void TaskD(void){
-  activate_task(TaskE);
-  terminate_task();
-}
-
-void TaskE(void){
-  activate_task(TaskA);
-  terminate_task();
-}
-
-void TaskF(void){
-  activate_task(TaskB);
-  terminate_task();
-}

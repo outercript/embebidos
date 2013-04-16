@@ -43,6 +43,7 @@ void add_task(_fptr funct, uint8_t args);
 void task_scheduler(void);
 void init_tasks(void);
 void activate_task(_fptr ptask);
+void activate_task_isr(_fptr ptask);
 void terminate_task(void);
 void run_task(uint8_t task_id);
 

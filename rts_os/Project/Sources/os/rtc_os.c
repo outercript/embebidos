@@ -23,7 +23,7 @@ void init_tasks(void){
       Task_list[index].status = TASK_IDLE; 
   }
   TASK_COUNTER=0;
-  
+  ACTIVE_TASK_ID=TASK_LIMIT;  
 }
 
 void add_task(_fptr funct, uint8_t args){
@@ -43,7 +43,6 @@ void add_task(_fptr funct, uint8_t args){
     Task_list[TASK_COUNTER].status = TASK_READY;
  
   TASK_COUNTER++;
-  ACTIVE_TASK_ID=TASK_COUNTER;
 }
 
 void activate_task(_fptr ptask){
@@ -136,7 +135,6 @@ void activate_task_isr(_fptr ptask){
          break;
       }
   } 
-  //task_scheduler();
 }
 
 
@@ -199,6 +197,35 @@ void run_task(uint8_t task_id){
       }
       Task_list[task_id].sp_start = 0;
       task_scheduler();
+}
+
+void chain_task(_fptr ptask){
+  uint8_t index;
+  DisableInterrupts;
+  
+  // Terminate Task
+  Task_list[ACTIVE_TASK_ID].status = TASK_IDLE;
+  Task_list[ACTIVE_TASK_ID].pc_continue = 0;
+  Task_list[ACTIVE_TASK_ID].sp_continue = 0;
+  RegisterHolder = Task_list[ACTIVE_TASK_ID].sp_start; 
+  ACTIVE_TASK_ID=TASK_LIMIT;
+  
+  //Active The task to chain
+  for(index = 0; index < TASK_COUNTER; index++){
+  
+      // Buscamos la tarea en la lista de tareas... U don't say!
+      if(Task_list[index].pc_start  == ptask){ 
+         Task_list[index].status = TASK_READY;
+         break;
+      }
+  } 
+  
+  //Now is safe to fall in an interrupt
+  EnableInterrupts;
+  _asm{
+    LDS RegisterHolder          ; Mueve el SP al inicio de la funcion
+    RTC                         ; Vamos al siguente valor del stack
+  }  
 }
 
 void terminate_task(void){

@@ -13,15 +13,7 @@
 #pragma CODE_SEG __NEAR_SEG NON_BANKED
 interrupt VectorNumber_Vportp void PortP_ISR(void){
   PIFP_PIFP0 = 1; 
-  /*
-  _asm{
-    TSX 
-    LEAX 8,X
-    STX RegisterHolder
-  }
-  *RegisterHolder = (uint16_t)((uint32_t)task_scheduler >> 8) ; 
-  //*/
-  activate_task_isr(TaskE);
+  activate_task_isr(TaskC);
 }
 
 #pragma CODE_SEG DEFAULT
@@ -41,12 +33,9 @@ void main(void) {
     PeriphInit();
     OSInit();
     
-    add_task(TaskA, 3 | AUTOSTART);
-    add_task(TaskB, 1);
-    add_task(TaskC, 5);
-    add_task(TaskD, 4);
-    add_task(TaskE, 1);
-    add_task(TaskF, 8);
+    add_task(TaskA, 1 | AUTOSTART);
+    add_task(TaskB, 2);
+    add_task(TaskC, 3);
     
     for(;;) {
     
