@@ -16,6 +16,15 @@ interrupt VectorNumber_Vportp void PortP_ISR(void){
   activate_task_isr(TaskC);
 }
 
+interrupt VectorNumber_Vtimovf void TimerOverflow_ISR(void){
+
+    //Clear Timer Interrupt Flag
+    TIM_TFLG1 |= TIM_TFLG1_C0F_MASK;
+    
+    // Interrupt code goes here
+    activate_task_isr(TaskD);
+}
+
 #pragma CODE_SEG DEFAULT
 
 void PeriphInit(void){
@@ -28,9 +37,19 @@ void PeriphInit(void){
     DDRA  = 0xFF;       // Conf Port A as Output
 }
 
+void TimerInit(void){
+
+    // Enable Timer
+    TIM_TSCR1 = 0x90; // TSCR1 - Enable normal timer
+ 
+    // Enable Timer Overflow Interrupt 
+    TIM_TSCR2 |= TIM_TSCR2_TOI_MASK; 
+}
+
 void main(void) {
 
     PeriphInit();
+    TimerInit();
     OSInit();
     
     add_task(TaskA, 1 | AUTOSTART);

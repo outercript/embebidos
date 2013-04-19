@@ -22,6 +22,12 @@ typedef struct{
   uint16_t  *sp_continue;
 }Task;
 
+typedef struct{
+  uint8_t   delay;
+  uint8_t   period;
+  uint8_t   task_id;
+}Alarm;
+
 
 enum{
   TASK_IDLE,
@@ -40,8 +46,10 @@ extern uint16_t *RegisterHolder;
 extern uint16_t **sp_value;
 
 void add_task(_fptr funct, uint8_t args);
+void add_alarm(_fptr funct, uint8_t delay, uint8_t period);
 void task_scheduler(void);
 void init_tasks(void);
+void init_alarms(void);
 void activate_task(_fptr ptask);
 void activate_task_isr(_fptr ptask);
 void terminate_task(void);

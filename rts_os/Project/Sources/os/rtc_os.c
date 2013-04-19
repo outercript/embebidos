@@ -1,11 +1,14 @@
 #include "rtc_os.h"
 
 static uint8_t  TASK_COUNTER;
+static uint8_t  ALARM_COUNTER;
 static Task Task_list[TASK_LIMIT];
+static Alarm Alarm_list[TASK_LIMIT];
 
 
 void OSInit(void){
     init_tasks();
+    init_alarms();
     ISR_FLAG;
     EnableInterrupts;  
 }
@@ -26,6 +29,15 @@ void init_tasks(void){
   ACTIVE_TASK_ID=TASK_LIMIT;  
 }
 
+void init_alarms(void){
+   uint8_t index;
+   for(index=0;index < TASK_LIMIT; index++){
+      Alarm_list[index].delay = 0;
+      Alarm_list[index].period = 0;
+      Alarm_list[index].task_id = 255;  
+   }
+}
+
 void add_task(_fptr funct, uint8_t args){
   
   // Prevent adding more tasks than we can allocate
@@ -44,6 +56,19 @@ void add_task(_fptr funct, uint8_t args){
  
   TASK_COUNTER++;
 }
+
+void add_alarm(_fptr ptask, uint8_t delay, uint8_t period){
+     uint8_t index;
+     for(index=0;index < TASK_COUNTER; index++){
+        if(Task_list[index].pc_start == ptask){
+            Alarm_list[ALARM_COUNTER].delay = delay;
+            Alarm_list[ALARM_COUNTER].period = period;
+            Alarm_list[ALARM_COUNTER].task_id = index;
+            ALARM_COUNTER++;
+        }  
+     }
+}
+  
 
 void activate_task(_fptr ptask){
   uint8_t index;

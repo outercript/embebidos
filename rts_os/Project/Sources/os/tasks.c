@@ -20,3 +20,9 @@ void TaskC(void){
   terminate_task();
 }
 
+void TaskD(void){
+  _asm{
+    NOP
+  }
+  terminate_task();
+}
