@@ -1,15 +1,8 @@
 #include "rtc_os.h"
 
-static uint8_t  TASK_COUNTER;
-static uint8_t  ALARM_COUNTER;
-static Task Task_list[TASK_LIMIT];
-static Alarm Alarm_list[TASK_LIMIT];
-
-
 void OSInit(void){
     init_tasks();
     init_alarms();
-    ISR_FLAG;
     EnableInterrupts;  
 }
 
@@ -36,6 +29,7 @@ void init_alarms(void){
       Alarm_list[index].period = 0;
       Alarm_list[index].task_id = 255;  
    }
+   ALARM_COUNTER = 0;
 }
 
 void add_task(_fptr funct, uint8_t args){
@@ -65,6 +59,7 @@ void add_alarm(_fptr ptask, uint8_t delay, uint8_t period){
             Alarm_list[ALARM_COUNTER].period = period;
             Alarm_list[ALARM_COUNTER].task_id = index;
             ALARM_COUNTER++;
+            break;
         }  
      }
 }

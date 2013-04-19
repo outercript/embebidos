@@ -17,12 +17,41 @@ interrupt VectorNumber_Vportp void PortP_ISR(void){
 }
 
 interrupt VectorNumber_Vtimovf void TimerOverflow_ISR(void){
-
+    uint8_t index;
+    
     //Clear Timer Interrupt Flag
     TIM_TFLG1 |= TIM_TFLG1_C0F_MASK;
     
     // Interrupt code goes here
-    activate_task_isr(TaskD);
+    
+    for(index=0; index < ALARM_COUNTER; index++){
+       
+       //Check the task to be run
+       if(Alarm_list[index].delay > 0)
+          Alarm_list[index].delay--;
+       
+       else
+          continue;
+       
+       // Activate Task
+       if(Alarm_list[index].delay == 0){
+       
+         //Is one shot alarm? 
+         if(Alarm_list[index].period) {
+             Alarm_list[index].delay = Alarm_list[index].period;
+         }
+         Task_list[Alarm_list[index].task_id].status = TASK_READY;
+       }
+    }
+    _asm{
+      TSX                     ; Guarda el SP en X
+      LEAX 9,X                ; Compensa el espacio de las variables
+                              ; en el stack y apunta a la direccion 
+                              ; del MS byte del PC. (N bytes + 1)
+      STX RegisterHolder      ; Guardamos el SP en la variable
+    }  
+    //Obtenemos la direccion del PC y apuntamos a ella
+    *RegisterHolder = (uint16_t)((uint32_t)task_scheduler >> 8) ;
 }
 
 #pragma CODE_SEG DEFAULT
@@ -52,10 +81,11 @@ void main(void) {
     TimerInit();
     OSInit();
     
+    
     add_task(TaskA, 1 | AUTOSTART);
     add_task(TaskB, 2);
     add_task(TaskC, 3);
-    
+    add_alarm(TaskB, 1,2);
     for(;;) {
     
       task_scheduler();
