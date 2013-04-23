@@ -51,8 +51,12 @@ void add_task(_fptr funct, uint8_t args){
   TASK_COUNTER++;
 }
 
-void add_alarm(_fptr ptask, uint8_t delay, uint8_t period){
+void add_alarm(_fptr ptask, uint8_t delay, uint16_t period){
      uint8_t index;
+     
+     if(ALARM_COUNTER >= TASK_LIMIT)
+        return;
+     
      for(index=0;index < TASK_COUNTER; index++){
         if(Task_list[index].pc_start == ptask){
             Alarm_list[ALARM_COUNTER].delay = delay;
@@ -105,7 +109,8 @@ void activate_task(_fptr ptask){
          break;
       }
   }
-  EnableInterrupts;  
+  EnableInterrupts;
+  ACTIVE_TASK_ID=TASK_LIMIT;  
   task_scheduler();
 }
 
@@ -113,38 +118,39 @@ void activate_task(_fptr ptask){
 void activate_task_isr(_fptr ptask){
   uint8_t index;
   
-  if(ACTIVE_TASK_ID < TASK_COUNTER && Task_list[ACTIVE_TASK_ID].pc_continue == 0){
-    //Obtenemos la direccion del stack donde se encuentra
-    //guardado el PC de retorno, sin contar la pagina
-    _asm{
-      TSX                     ; Guarda el SP en X
-      LEAX 17,X               ; Compensa el espacio de las variables
-                              ; en el stack y apunta a la direccion 
-                              ; del MS byte del PC. (N bytes + 1)
-      STX RegisterHolder      ; Guardamos el SP en la variable
-      STX sp_value            ; Guardamos el SP en la variable
+  if(ACTIVE_TASK_ID < TASK_LIMIT){
 
-    }
-    
-    
+    if( Task_list[ACTIVE_TASK_ID].pc_continue == 0){
+      //Obtenemos la direccion del stack donde se encuentra
+      //guardado el PC de retorno, sin contar la pagina
+      _asm{
+        TSX                     ; Guarda el SP en X
+        LEAX 17,X               ; Compensa el espacio de las variables
+                                ; en el stack y apunta a la direccion 
+                                ; del MS byte del PC. (N bytes + 1)
+        STX RegisterHolder      ; Guardamos el SP en la variable
+        STX sp_value            ; Guardamos el SP en la variable
+
+      }    
+        
+      //Obtenemos la direccion del PC y apuntamos a ella
+      Task_list[ACTIVE_TASK_ID].pc_continue = *sp_value;
+      *RegisterHolder = (uint16_t)((uint32_t)task_scheduler >> 8) ;
+     
+      // Guarda el valor del SP antes de haber entrado a activate_task()
+      _asm{
+        LDX RegisterHolder      ; Guarda en X el valor del SP inicial
+        LEAX -37,X              ; Compensa el decremento en el SP 
+                                ; de la instrucción CALL
+        STX sp_value            ; Guarda el valor en el apuntador
+      }                   
       
-    //Obtenemos la direccion del PC y apuntamos a ella
-    Task_list[ACTIVE_TASK_ID].pc_continue = *sp_value;
-    *RegisterHolder = (uint16_t)((uint32_t)task_scheduler >> 8) ;
-   
-    // Guarda el valor del SP antes de haber entrado a activate_task()
-    _asm{
-      LDX RegisterHolder      ; Guarda en X el valor del SP inicial
-      LEAX -37,X              ; Compensa el decremento en el SP 
-                              ; de la instrucción CALL
-      STX sp_value            ; Guarda el valor en el apuntador
-    }                   
-    
-    // Guarda el valor del SP en la estructura
-    Task_list[ACTIVE_TASK_ID].sp_continue = sp_value;
-    
-    // Sede el control de la tarea activa
-    Task_list[ACTIVE_TASK_ID].status = TASK_READY;
+      // Guarda el valor del SP en la estructura
+      Task_list[ACTIVE_TASK_ID].sp_continue = sp_value;
+      
+      // Sede el control de la tarea activa
+      Task_list[ACTIVE_TASK_ID].status = TASK_READY;
+    }
   }
   
   for(index = 0; index < TASK_COUNTER; index++){
@@ -216,6 +222,7 @@ void run_task(uint8_t task_id){
           (*Task_list[task_id].pc_start)();
       }
       Task_list[task_id].sp_start = 0;
+      ACTIVE_TASK_ID=TASK_LIMIT;
       task_scheduler();
 }
 
@@ -249,10 +256,12 @@ void chain_task(_fptr ptask){
 }
 
 void terminate_task(void){
+  DisableInterrupts;
   Task_list[ACTIVE_TASK_ID].status = TASK_IDLE;
   Task_list[ACTIVE_TASK_ID].pc_continue = 0;
   Task_list[ACTIVE_TASK_ID].sp_continue = 0;
   RegisterHolder = Task_list[ACTIVE_TASK_ID].sp_start; 
+  EnableInterrupts;
   _asm{
     LDS RegisterHolder          ; Mueve el SP al inicio de la funcion
     RTC                         ; Vamos al siguente valor del stack

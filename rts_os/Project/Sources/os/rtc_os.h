@@ -24,7 +24,7 @@ typedef struct{
 
 typedef struct{
   uint8_t   delay;
-  uint8_t   period;
+  uint16_t   period;
   uint8_t   task_id;
 }Alarm;
 
@@ -40,6 +40,7 @@ enum{
 #define TASK_LIMIT    (10)
 
 /* GLOBALS */
+extern volatile short PRE;
 extern uint8_t ACTIVE_TASK_ID;
 extern volatile uint8_t ISR_FLAG;
 extern uint16_t *RegisterHolder;
@@ -47,11 +48,12 @@ extern uint16_t **sp_value;
 
 extern volatile uint8_t  ALARM_COUNTER;
 extern volatile uint8_t  TASK_COUNTER;
+extern volatile Bool     TASK_ACTIVATED;
 extern volatile Task Task_list[TASK_LIMIT];
 extern volatile Alarm Alarm_list[TASK_LIMIT];
 
 void add_task(_fptr funct, uint8_t args);
-void add_alarm(_fptr funct, uint8_t delay, uint8_t period);
+void add_alarm(_fptr funct, uint8_t delay, uint16_t period);
 void task_scheduler(void);
 void init_tasks(void);
 void init_alarms(void);

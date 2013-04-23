@@ -1,5 +1,6 @@
 #include "tasks.h"
 #include "rtc_os.h"
+//#include <MC9S12XEP100.h> 
 
 
 void TaskA(void){
@@ -7,9 +8,7 @@ void TaskA(void){
 }
 
 void TaskB(void){
-  _asm{
-    NOP
-  }
+  PRE++;
   terminate_task();
 }
 
@@ -26,3 +25,5 @@ void TaskD(void){
   }
   terminate_task();
 }
+
+
