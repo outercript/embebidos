@@ -43,6 +43,16 @@ void init_alarms(void){
     ALARM_COUNTER = 0;
 }
 
+void init_mailboxes(void){
+    uint8_t index;
+    for(index=0;index < TASK_LIMIT; index++){
+        Mailbox_list[index].data_ready = FALSE;
+        Mailbox_list[index].sender = 0;
+        Mailbox_list[index].receiver = 0;
+        Mailbox_list[index].data = 0;
+    }
+    MAILBOX_COUNTER = 0;
+}
 
 void add_task(_fptr funct, uint8_t args){
 

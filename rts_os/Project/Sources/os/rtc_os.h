@@ -9,7 +9,8 @@
 #define TASK_LIMIT  (10)
 #define TICK_TIME   (2000)
 #define AUTOSTART   (0x80)
-
+#define TASK_NOT_FOUND (0xFE)
+#define ERROR (0xFF)
 
 typedef unsigned char uint8_t;
 typedef unsigned int  uint16_t;
@@ -33,6 +34,12 @@ typedef struct{
   uint8_t   task_id;
 }Alarm;
 
+typedef struct{
+    Bool    data_ready;
+    uint8_t sender_id;
+    uint8_t receiver_id;
+    uint8_t data;
+}Mailbox;
 
 /* TASK STATES */
 enum{
@@ -40,7 +47,24 @@ enum{
   TASK_READY,
   TASK_RUNNING,
   TASK_COMPLETE,
-  TASK_SUSPENDED
+  TASK_WAIT
+};
+
+enum{
+    SUCCESS,
+    FAILURE
+};
+
+enum{
+    MB_EMPTY=128,
+    MB_FULL,
+    MB_READ,
+    MB_WRITE,
+    MB_NO_MAILBOX_LEFT,
+    MB_INVALID_MAILBOX,
+    MB_INVALID_PERMS,
+    MB_UNABLE_TO_READ,
+    MB_UNABLE_TO_WRITE
 };
 
 /* GLOBALS */
@@ -51,11 +75,13 @@ extern uint16_t **sp_value;
 extern uint16_t PC_STACK [1];
 
 extern volatile uint8_t PC_STACK_SIZE;
-extern volatile uint8_t ALARM_COUNTER;
-extern volatile uint8_t TASK_COUNTER;
-extern volatile Bool    TASK_ACTIVATED;
+extern volatile uint8_t  ALARM_COUNTER;
+extern volatile uint8_t  TASK_COUNTER;
+extern volatile uint8_t  MAILBOX_COUNTER;
+extern volatile Bool     TASK_ACTIVATED;
 extern volatile Task Task_list[TASK_LIMIT];
-extern Alarm Alarm_list[TASK_LIMIT];
+extern volatile Alarm Alarm_list[TASK_LIMIT];
+extern volatile Mailbox Mailbox_list[TASK_LIMIT];
 
 
 /* PROTOTYPES */
@@ -66,10 +92,18 @@ void add_task(_fptr funct, uint8_t args);
 void add_alarm(_fptr funct, uint8_t delay, uint8_t period);
 void task_scheduler(void);
 void task_scheduler_isr(void);
+uint8_t add_mailbox(_fptr sender, _fptr receiver);
+uint8_t get_task_id(_fptr ptask);
+
 void init_tasks(void);
 void init_alarms(void);
+void init_mailboxes(void);
+
 void activate_task(_fptr ptask);
 void activate_task_isr(_fptr ptask);
 void run_task(uint8_t task_id);
+
+uint8_t write_mailbox(uint8_t mailbox_id, uint8_t *data);
+uint8_t read_mailbox(uint8_t mailbox_id, uint8_t *data);
 
 #endif
