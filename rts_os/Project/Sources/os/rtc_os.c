@@ -3,6 +3,9 @@
 void OSInit(void){
     init_tasks();
     init_alarms();
+    
+    TIM_TIE_C0I = TRUE; 
+    TIM_TC0     = TIM_TCNT + TICK_TIME;
     EnableInterrupts;  
 }
 
@@ -110,7 +113,7 @@ void activate_task(_fptr ptask){
       }
   }
   EnableInterrupts;
-  ACTIVE_TASK_ID=TASK_LIMIT;  
+  ACTIVE_TASK_ID = TASK_LIMIT;  
   task_scheduler();
 }
 
@@ -135,12 +138,15 @@ void activate_task_isr(_fptr ptask){
         
       //Obtenemos la direccion del PC y apuntamos a ella
       Task_list[ACTIVE_TASK_ID].pc_continue = *sp_value;
+      INTERRUPT_CASE = TRUE;
+      RegisterHolderBKUP = RegisterHolder;
       *RegisterHolder = (uint16_t)((uint32_t)task_scheduler >> 8) ;
+      
      
       // Guarda el valor del SP antes de haber entrado a activate_task()
       _asm{
         LDX RegisterHolder      ; Guarda en X el valor del SP inicial
-        LEAX -37,X              ; Compensa el decremento en el SP 
+        LEAX 2,X              ; Compensa el decremento en el SP 
                                 ; de la instrucción CALL
         STX sp_value            ; Guarda el valor en el apuntador
       }                   
@@ -168,7 +174,16 @@ void task_scheduler(void){
   uint8_t index;
   uint8_t task_HP_index;  
   uint8_t task_HP_priority;
-
+  uint16_t *RegisterHolderLocal;
+  DisableInterrupts;
+  RegisterHolderLocal = 0;
+  
+  if(INTERRUPT_CASE){
+    INTERRUPT_CASE = FALSE;
+    RegisterHolderLocal = RegisterHolderBKUP;
+    RegisterHolderBKUP = 0;     
+  }
+  
   task_HP_index = 255;  // Ponemos un valor invalido
   task_HP_priority = 0; // Ponemos la prioridad mas baja
 
@@ -181,14 +196,38 @@ void task_scheduler(void){
           }
   }
 
+  
   // Verificar que es un valor valido
   if(task_HP_index > TASK_COUNTER){ 
-    ACTIVE_TASK_ID=TASK_COUNTER;
+    ACTIVE_TASK_ID=TASK_LIMIT;
+    EnableInterrupts;
+    /*if(RegisterHolderLocal){
+       RegisterHolder = RegisterHolderLocal;
+      _asm{
+         TSX  
+         LEAX 5,X
+         STX RegisterHolderLocal  
+         LDS RegisterHolderLocal
+         LDX RegisterHolder
+         JMP 0,X
+      }
+    }     //*/
     return;
   }
+  
   // Pos corrale mijo que va tarde  
-  run_task(task_HP_index);
-      
+  run_task(task_HP_index); 
+ /* if(RegisterHolderLocal){
+     RegisterHolder = RegisterHolderLocal;
+    _asm{
+       TSX  
+       LEAX 5,X
+       STX RegisterHolderLocal  
+       LDS RegisterHolderLocal
+       LDX RegisterHolder
+       JMP 0,X
+    }
+  }  //*/
 }
                   
 void run_task(uint8_t task_id){
@@ -205,6 +244,8 @@ void run_task(uint8_t task_id){
          // Solo usar globales
          RegisterHolder = Task_list[ACTIVE_TASK_ID].pc_continue;
          Task_list[ACTIVE_TASK_ID].pc_continue = 0;
+         EnableInterrupts;
+         
          _asm{
             LDX RegisterHolder    ; Carga en X el PC del task donde debe regresar
             JMP 0,X               ; Salta al PC del TASK
@@ -219,10 +260,13 @@ void run_task(uint8_t task_id){
           }
           // Guarda el SP inicial de la funcion a llamar
           Task_list[task_id].sp_start = RegisterHolder;
+          EnableInterrupts;
           (*Task_list[task_id].pc_start)();
+          DisableInterrupts;
       }
-      Task_list[task_id].sp_start = 0;
-      ACTIVE_TASK_ID=TASK_LIMIT;
+      
+      Task_list[ACTIVE_TASK_ID].sp_start = 0;
+      ACTIVE_TASK_ID = TASK_LIMIT;
       task_scheduler();
 }
 
@@ -246,9 +290,7 @@ void chain_task(_fptr ptask){
          break;
       }
   } 
-  
-  //Now is safe to fall in an interrupt
-  EnableInterrupts;
+
   _asm{
     LDS RegisterHolder          ; Mueve el SP al inicio de la funcion
     RTC                         ; Vamos al siguente valor del stack
@@ -261,7 +303,8 @@ void terminate_task(void){
   Task_list[ACTIVE_TASK_ID].pc_continue = 0;
   Task_list[ACTIVE_TASK_ID].sp_continue = 0;
   RegisterHolder = Task_list[ACTIVE_TASK_ID].sp_start; 
-  EnableInterrupts;
+  ACTIVE_TASK_ID=TASK_LIMIT;
+  
   _asm{
     LDS RegisterHolder          ; Mueve el SP al inicio de la funcion
     RTC                         ; Vamos al siguente valor del stack

@@ -13,21 +13,31 @@
 #pragma CODE_SEG __NEAR_SEG NON_BANKED
 interrupt VectorNumber_Vportp void PortP_ISR(void){
   PIFP_PIFP0 = 1; 
+  if(PRE){
+      PORTA_PA0 = 1;
+  }  else
+    PORTA_PA0 = 0;
   activate_task_isr(TaskC);
 }
 
-interrupt VectorNumber_Vtimovf void TimerOverflow_ISR(void){
+interrupt VectorNumber_Vtimch0 void Timer_alarm(void){
     uint8_t index;
     
     //Clear Timer Interrupt Flag
     TIM_TFLG1 |= TIM_TFLG1_C0F_MASK;
     
-    
+    TIM_TC0 = TIM_TCNT + TICK_TIME;
+  
+    /*
     if(PRE > 2 ){
       PRE = 0;
       PORTA_PA0 ^= 1;
     }
-    
+    //*/
+    if(PRE){
+      PORTA_PA0 = 1;
+    }  else
+        PORTA_PA0 = 0;
     //Code to activate Alarm Tasks.
     TASK_ACTIVATED = FALSE;
     for(index=0; index < ALARM_COUNTER; index++){
@@ -51,7 +61,7 @@ interrupt VectorNumber_Vtimovf void TimerOverflow_ISR(void){
        }
     }
   
-    
+    //*
     _asm{
       TSX                     ; Guarda el SP en X
       LEAX 9,X                ; Compensa el espacio de las variables
@@ -65,26 +75,33 @@ interrupt VectorNumber_Vtimovf void TimerOverflow_ISR(void){
     if(ACTIVE_TASK_ID < TASK_LIMIT && TASK_ACTIVATED)
       Task_list[ACTIVE_TASK_ID].pc_continue = *sp_value;
     
-    if(TASK_ACTIVATED)
-      *RegisterHolder = (uint16_t)((uint32_t)task_scheduler >> 8) ;
     
-    if(ACTIVE_TASK_ID < TASK_LIMIT && TASK_ACTIVATED){
-        
-      // Guarda el valor del SP antes de haber entrado a activate_task()
-      _asm{
-        LDX RegisterHolder      ; Guarda en X el valor del SP inicial
-        LEAX -35,X              ; Compensa el decremento en el SP 
-                                ; de la instrucción CALL
-        STX sp_value            ; Guarda el valor en el apuntador
-      }                   
+    if(TASK_ACTIVATED){
+      INTERRUPT_CASE = TRUE;
+      RegisterHolderBKUP = RegisterHolder;
+      //*RegisterHolder = (uint16_t)((uint32_t)task_scheduler >> 8) ;
       
-      // Guarda el valor del SP en la estructura
-      Task_list[ACTIVE_TASK_ID].sp_continue = sp_value;
-      
-      // Sede el control de la tarea activa
-      Task_list[ACTIVE_TASK_ID].status = TASK_READY;
-      ACTIVE_TASK_ID = TASK_LIMIT;
     }
+    
+    
+    // Guarda el valor del SP antes de haber entrado a activate_task()
+    _asm{
+      LDX RegisterHolder      ; Guarda en X el valor del SP inicial
+      LEAX 2,X                ; Compensa el decremento en el SP 
+                              ; de la instrucción CALL
+      STX sp_value            ; Guarda el valor en el apuntador
+    } 
+    
+    if(ACTIVE_TASK_ID < TASK_LIMIT && TASK_ACTIVATED){                  
+        
+        // Guarda el valor del SP en la estructura
+        Task_list[ACTIVE_TASK_ID].sp_continue = sp_value;
+        
+        // Sede el control de la tarea activa
+        Task_list[ACTIVE_TASK_ID].status = TASK_READY;
+        ACTIVE_TASK_ID = TASK_LIMIT;
+    }
+    //*/
 }
 
 #pragma CODE_SEG DEFAULT
@@ -104,13 +121,15 @@ void TimerInit(void){
 
     // Enable Timer
     TIM_TSCR1 = 0x90; // TSCR1 - Enable normal timer
- 
-    // Enable Timer Overflow Interrupt 
-    TIM_TSCR2 |= TIM_TSCR2_TOI_MASK;
+     
     
-    TIM_TSCR2_PR0 = 0;
-    TIM_TSCR2_PR1 = 0;
-    TIM_TSCR2_PR2 = 0;
+    TIM_TSCR2_PR0 = 1;
+    TIM_TSCR2_PR1 = 1;
+    TIM_TSCR2_PR2 = 1; 
+    TIM_PACTL  = 0x00; // Setup Timer Preset 
+    
+    // Enable Output compare Port 0
+    TIM_TIOS_IOS0 = TRUE;   
 }
 
 void main(void) {
@@ -122,10 +141,11 @@ void main(void) {
     
     //add_task(TaskA, 1 | AUTOSTART);
     add_task(TaskB, 1 | AUTOSTART);
-    //add_task(TaskC, 3);
-    add_alarm(TaskB, 1,10);
-    for(;;) {
     
+    add_task(TaskC, 3);
+    add_alarm(TaskB, 1, 2);
+    for(;;) {
+      _asm NOP; //Because I can!
       task_scheduler();
 
     } /* loop forever */
