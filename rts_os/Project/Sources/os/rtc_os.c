@@ -152,7 +152,7 @@ uint8_t write_mailbox(uint8_t mailbox_id, uint8_t *data_ptr){
     }
 
     // Check current task has writte permissions
-    if(Mailbox_list[mailbox_id].sender_id != ACTIVE_TASK_ID){
+    if(Mailbox_list[mailbox_id].sender_id != caller_task_id){
         EnableInterrupts;
         return MB_INVALID_PERMS;
     }
