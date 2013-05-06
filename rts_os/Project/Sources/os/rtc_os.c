@@ -139,6 +139,7 @@ uint8_t is_mailbox_full(uint8_t mailbox_id){
 
 uint8_t write_mailbox(uint8_t mailbox_id, uint8_t *data_ptr){
     uint8_t caller_task_id;
+    uint8_t receiver_task_id;
 
     // Save current active task so we can use that later
     // ie. when scheduler call us back
@@ -166,9 +167,11 @@ uint8_t write_mailbox(uint8_t mailbox_id, uint8_t *data_ptr){
     Mailbox_list[mailbox_id].data = *data_ptr;
     Mailbox_list[mailbox_id].status = MB_FULL;
 
-    // It task is WAITING for data, set to READY
-    if(Task_list[caller_task_id].status == TASK_WAIT)
-        Task_list[caller_task_id].status = TASK_READY;
+    // Obtain the recipient task id
+    // If task is WAITING for reading data, set to READY
+    receiver_task_id = Mailbox_list[mailbox_id].receiver_id;
+    if(Task_list[receiver_task_id].status == TASK_WAIT)
+        Task_list[receiver_task_id].status = TASK_READY;
 
     EnableInterrupts;
     return SUCCESS;
@@ -177,6 +180,7 @@ uint8_t write_mailbox(uint8_t mailbox_id, uint8_t *data_ptr){
 
 uint8_t read_mailbox(uint8_t mailbox_id, uint8_t *data_ptr){
     uint8_t caller_task_id;
+    uint8_t sender_task_id;
 
     // Save current active task so we can use that later
     // ie. when scheduler call us back
@@ -204,9 +208,11 @@ uint8_t read_mailbox(uint8_t mailbox_id, uint8_t *data_ptr){
     *data_ptr = &Mailbox_list[mailbox_id].data;
     Mailbox_list[mailbox_id].status = MB_EMPTY;
 
-    // It task is WAITING for data, set to READY
-    if(Task_list[caller_task_id].status == TASK_WAIT)
-        Task_list[caller_task_id].status = TASK_READY;
+    // Obtain sender task id,
+    // If task is WAITING for writing data, set to READY
+    sender_task_id = Mailbox_list[mailbox_id].sender_id;
+    if(Task_list[sender_task_id].status == TASK_WAIT)
+        Task_list[sender_task_id].status = TASK_READY;
 
     EnableInterrupts;
     return SUCCESS;
@@ -286,7 +292,7 @@ void task_scheduler_mailbox(void){
     //guardado el PC de retorno, sin contar la pagina
     _asm{
       TSX                     ; Guarda el SP en X
-      LEAX 6,X                ; Compensa el espacio de las variables
+      LEAX 7,X                ; Compensa el espacio de las variables
                               ; en el stack y apunta a la direccion
                               ; del MS byte del PC. (N bytes + 1)
       STX return_sp_value      ; Guardamos el SP en la variable
