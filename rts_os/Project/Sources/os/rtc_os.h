@@ -35,7 +35,7 @@ typedef struct{
 }Alarm;
 
 typedef struct{
-    Bool    data_ready;
+    uint8_t status;
     uint8_t sender_id;
     uint8_t receiver_id;
     uint8_t data;
@@ -63,6 +63,7 @@ enum{
     MB_NO_MAILBOX_LEFT,
     MB_INVALID_MAILBOX,
     MB_INVALID_PERMS,
+    MB_INVALID_ACTION,
     MB_UNABLE_TO_READ,
     MB_UNABLE_TO_WRITE
 };
@@ -103,6 +104,8 @@ void activate_task(_fptr ptask);
 void activate_task_isr(_fptr ptask);
 void run_task(uint8_t task_id);
 
+uint8_t is_mailbox_full(uint8_t mailbox_id);
+uint8_t is_mailbox_empty(uint8_t mailbox_id);
 uint8_t write_mailbox(uint8_t mailbox_id, uint8_t *data);
 uint8_t read_mailbox(uint8_t mailbox_id, uint8_t *data);
 

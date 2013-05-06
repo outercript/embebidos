@@ -46,7 +46,7 @@ void init_alarms(void){
 void init_mailboxes(void){
     uint8_t index;
     for(index=0;index < TASK_LIMIT; index++){
-        Mailbox_list[index].data_ready = FALSE;
+        Mailbox_list[index].status = MB_EMPTY;
         Mailbox_list[index].sender = 0;
         Mailbox_list[index].receiver = 0;
         Mailbox_list[index].data = 0;
@@ -91,11 +91,144 @@ void add_alarm(_fptr ptask, uint8_t delay, uint8_t period){
     }
 }
 
+uint8_t add_mailbox(_fptr sender, _fptr receiver){
+    uint8_t index, sender_id, receiver_id;
+
+    // Prevent array out of bound error
+    if(MAILBOX_COUNTER >= TASK_LIMIT)
+        return MB_NO_MAILBOX_LEFT;
+
+    sender_id = get_task_id(sender);
+    receiver_id = get_task_id(receiver);
+
+    // Validate the sender and receiver task ids
+    if(sender_id == TASK_NOT_FOUND || receiver_id == TASK_NOT_FOUND)
+        return ERROR;
+
+    // Assigns the sender and receiver to the given mailbox
+    Mailbox_list[MAILBOX_COUNTER].sender_id = sender_id;
+    Mailbox_list[MAILBOX_COUNTER].receiver_id = receiver_id;
+
+    // Return the index of the mailbox
+    return MAILBOX_COUNTER;
+}
+
+uint8_t is_mailbox_empty(uint8_t mailbox_id){
+    uint8_t retcode;
+
+    // Check we received an existing/valid mailbox
+    if(mailbox_id >= MAILBOX_COUNTER)
+        return MB_INVALID_MAILBOX;
+
+    // Return True if empty, false otherwise
+    retcode = Mailbox_list[mailbox_id].status == MB_EMPTY ? TRUE : FALSE;
+    return retcode;
+}
+
+uint8_t is_mailbox_full(uint8_t mailbox_id){
+    uint8_t retcode;
+
+    // Check we received an existing/valid mailbox
+    if(mailbox_id >= MAILBOX_COUNTER)
+        return MB_INVALID_MAILBOX;
+
+    // Return True if empty, false otherwise
+    retcode = Mailbox_list[mailbox_id].status == MB_FULL ? TRUE : FALSE;
+    return retcode;
+}
+
+uint8_t write_mailbox(uint8_t mailbox_id, uint8_t *data_ptr){
+    uint8_t caller_task_id;
+
+    // Save current active task so we can use that later
+    // ie. when scheduler call us back
+    DisableInterrupts;
+    caller_task_id = ACTIVE_TASK_ID;
+
+    // Check we received an existing/valid mailbox
+    if(mailbox_id >= MAILBOX_COUNTER){
+        EnableInterrupts;
+        return MB_INVALID_MAILBOX;
+    }
+
+    // Check current task has writte permissions
+    if(Mailbox_list[mailbox_id].sender_id != ACTIVE_TASK_ID){
+        EnableInterrupts;
+        return MB_INVALID_PERMS;
+    }
+
+    // Go to scheduler if we need to wait for data
+    while(Mailbox_list[mailbox_id].status == MB_FULL){
+        task_scheduler_mailbox();
+    }
+
+    // Write data to the mailbox
+    Mailbox_list[mailbox_id].data = *data_ptr;
+    Mailbox_list[mailbox_id].status = MB_FULL;
+
+    // It task is WAITING for data, set to READY
+    if(Task_list[caller_task_id].status == TASK_WAIT)
+        Task_list[caller_task_id].status = TASK_READY;
+
+    EnableInterrupts;
+    return SUCCESS;
+}
+
+
+uint8_t read_mailbox(uint8_t mailbox_id, uint8_t *data_ptr){
+    uint8_t caller_task_id;
+
+    // Save current active task so we can use that later
+    // ie. when scheduler call us back
+    DisableInterrupts;
+    caller_task_id = ACTIVE_TASK_ID;
+
+    // Check we received an existing/valid mailbox
+    if(mailbox_id >= MAILBOX_COUNTER){
+        EnableInterrupts;
+        return MB_INVALID_MAILBOX;
+    }
+
+    // Check current task has writte permissions
+    if(Mailbox_list[mailbox_id].receiver_id != caller_task_id){
+        EnableInterrupts;
+        return MB_INVALID_PERMS;
+    }
+
+    // Make sure the mailbox has new data
+    while(Mailbox_list[mailbox_id].status == MB_EMPTY){
+        task_scheduler_mailbox();
+    }
+
+    // Obtain data from mailbox
+    *data_ptr = &Mailbox_list[mailbox_id].data;
+    Mailbox_list[mailbox_id].status = MB_EMPTY;
+
+    // It task is WAITING for data, set to READY
+    if(Task_list[caller_task_id].status == TASK_WAIT)
+        Task_list[caller_task_id].status = TASK_READY;
+
+    EnableInterrupts;
+    return SUCCESS;
+}
+
+
+uint8_t get_task_id(_fptr ptask){
+    uint8_t index;
+
+    // Looks for the given task in the task list, if found returns its index
+    // Otherwise returns 255
+    for(index=0;index < TASK_COUNTER; index++){
+        if(Task_list[index].pc_start == ptask)
+            return index;
+    }
+
+    return TASK_NOT_FOUND;
+}
 
 //////////////////////////////////////////////////////////
 //                    ACTIVATE TASKS                    //
 //////////////////////////////////////////////////////////
-  
 
 void activate_task(_fptr ptask){
     uint8_t index;
@@ -141,6 +274,40 @@ void activate_task(_fptr ptask){
     
     EnableInterrupts;
     ACTIVE_TASK_ID = TASK_LIMIT;  
+    task_scheduler();
+}
+
+void task_scheduler_mailbox(void){
+    uint16_t **return_sp_value;
+    DisableInterrupts;
+
+
+    //Obtenemos la direccion del stack donde se encuentra
+    //guardado el PC de retorno, sin contar la pagina
+    _asm{
+      TSX                     ; Guarda el SP en X
+      LEAX 6,X                ; Compensa el espacio de las variables
+                              ; en el stack y apunta a la direccion
+                              ; del MS byte del PC. (N bytes + 1)
+      STX return_sp_value      ; Guardamos el SP en la variable
+    }
+
+    // Hackeamos el valor de PC de retorno para que apunte al
+    // inicio de la llamada de mailbox (read or write)
+    Task_list[ACTIVE_TASK_ID].pc_continue = *return_sp_value;
+
+
+    // Guarda el valor del SP antes de haber entrado a activate_task()
+    _asm{
+      LDX  return_sp_value     ; Guarda en X el valor del SP inicial
+      LEAX 2,X                 ; Compensa el decremento en el SP
+                               ; de la instrucción CALL
+      STX  return_sp_value     ; Guarda el valor en el apuntador
+    }
+    Task_list[ACTIVE_TASK_ID].sp_continue = return_sp_value;
+
+    // Sede el control de la tarea activa
+    Task_list[ACTIVE_TASK_ID].status = TASK_WAIT;
     task_scheduler();
 }
 
