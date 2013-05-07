@@ -13,55 +13,45 @@
 #pragma CODE_SEG __NEAR_SEG NON_BANKED
 interrupt VectorNumber_Vportp void PortP_ISR(void){
   PIFP_PIFP0 = 1; 
-  if(PRE){
-      PORTA_PA0 = 1;
-  }  else
-    PORTA_PA0 = 0;
-  activate_task_isr(TaskC);
 }
 
 interrupt VectorNumber_Vtimch0 void Timer_alarm(void){
     uint8_t index;
-    
+
     //Clear Timer Interrupt Flag
     TIM_TFLG1 |= TIM_TFLG1_C0F_MASK;
-    
+
     TIM_TC0 = TIM_TCNT + TICK_TIME;
-  
-    /*
-    if(PRE > 2 ){
-      PRE = 0;
-      PORTA_PA0 ^= 1;
-    }
-    //*/
-    if(PRE){
-      PORTA_PA0 = 1;
-    }  else
-        PORTA_PA0 = 0;
+
+
     //Code to activate Alarm Tasks.
     TASK_ACTIVATED = FALSE;
     for(index=0; index < ALARM_COUNTER; index++){
-       
-       //Check the task to be run
-       if(Alarm_list[index].delay > 0)
-          Alarm_list[index].delay--;
-       
-       else
-          continue;
-       
-       // Activate Task
-       if(Alarm_list[index].delay == 0){
-       
-         //Is one shot alarm? 
-         if(Alarm_list[index].period) {
-             Alarm_list[index].delay = Alarm_list[index].period;
-         }
-         Task_list[Alarm_list[index].task_id].status = TASK_READY;
-         TASK_ACTIVATED = TRUE;
-       }
-    }
+
+      //Check the task to be run
+      if(Alarm_list[index].delay > 0)
+        Alarm_list[index].delay--;
+
+      else
+        continue;
+
+      // Activate Task
+      if(Alarm_list[index].delay == 0){
+
+        //Is one shot alarm? 
+        if(Alarm_list[index].period) {
+          Alarm_list[index].delay = Alarm_list[index].period;
+        }
+        
+        //FIXME: while the HACK is DISABLED
+        if( Alarm_list[index].task_id != ACTIVE_TASK_ID){
+          Task_list[Alarm_list[index].task_id].status = TASK_READY;
+          TASK_ACTIVATED = TRUE;
+        }
+      }
+    }//end for
   
-    //*
+    /* FIXME:        HACK CODE DISABLED!!!!!!!
     _asm{
       TSX                     ; Guarda el SP en X
       LEAX 9,X                ; Compensa el espacio de las variables
@@ -77,8 +67,8 @@ interrupt VectorNumber_Vtimch0 void Timer_alarm(void){
     
     
     if(TASK_ACTIVATED){
-      INTERRUPT_CASE = TRUE;
-      RegisterHolderBKUP = RegisterHolder;
+      //INTERRUPT_CASE = TRUE;
+      //RegisterHolderBKUP = RegisterHolder;
       //*RegisterHolder = (uint16_t)((uint32_t)task_scheduler >> 8) ;
       
     }
@@ -123,9 +113,9 @@ void TimerInit(void){
     TIM_TSCR1 = 0x90; // TSCR1 - Enable normal timer
      
     
-    TIM_TSCR2_PR0 = 1;
-    TIM_TSCR2_PR1 = 1;
-    TIM_TSCR2_PR2 = 1; 
+    TIM_TSCR2_PR0 = 0;
+    TIM_TSCR2_PR1 = 0;
+    TIM_TSCR2_PR2 = 0; 
     TIM_PACTL  = 0x00; // Setup Timer Preset 
     
     // Enable Output compare Port 0
@@ -138,12 +128,20 @@ void main(void) {
     TimerInit();
     OSInit();
     
+    add_task(PWM_0, 5);
+    add_task(PWM_1, 4);
+    add_task(PWM_2, 3);
+    add_task(PWM_3, 1);
+    add_task(PWM_4, 1);
+    add_task(PWM_5, 1);
     
-    //add_task(TaskA, 1 | AUTOSTART);
-    add_task(TaskB, 1 | AUTOSTART);
-    
-    add_task(TaskC, 3);
-    add_alarm(TaskB, 1, 2);
+    add_alarm(PWM_0, 2, 5); // 1 prendido, 3 apagados 50Hz  %25
+    add_alarm(PWM_1, 1, 1); // 1 prendido, 3 apagados 250Hz %25
+    add_alarm(PWM_2, 1, 1); // 17 prendidos, apagado 40Hz %70
+    add_alarm(PWM_3, 2, 5); // 1 prendido, 4 apagados 40Hz %20
+    add_alarm(PWM_4, 2, 1); // 9 prendidos, 1 apagado 100Hz %20
+    add_alarm(PWM_5, 2, 4); // 2 prendidos, 3 apagado 50Hz %40
+
     for(;;) {
       _asm NOP; //Because I can!
       task_scheduler();

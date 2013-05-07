@@ -60,7 +60,7 @@ void add_alarm(_fptr ptask, uint8_t delay, uint16_t period){
      if(ALARM_COUNTER >= TASK_LIMIT)
         return;
      
-     for(index=0;index < TASK_COUNTER; index++){
+     for(index = 0; index < TASK_COUNTER; index++){
         if(Task_list[index].pc_start == ptask){
             Alarm_list[ALARM_COUNTER].delay = delay;
             Alarm_list[ALARM_COUNTER].period = period;
@@ -138,8 +138,8 @@ void activate_task_isr(_fptr ptask){
         
       //Obtenemos la direccion del PC y apuntamos a ella
       Task_list[ACTIVE_TASK_ID].pc_continue = *sp_value;
-      INTERRUPT_CASE = TRUE;
-      RegisterHolderBKUP = RegisterHolder;
+      //INTERRUPT_CASE = TRUE;
+      //RegisterHolderBKUP = RegisterHolder;
       *RegisterHolder = (uint16_t)((uint32_t)task_scheduler >> 8) ;
       
      
@@ -174,15 +174,7 @@ void task_scheduler(void){
   uint8_t index;
   uint8_t task_HP_index;  
   uint8_t task_HP_priority;
-  uint16_t *RegisterHolderLocal;
   DisableInterrupts;
-  RegisterHolderLocal = 0;
-  
-  if(INTERRUPT_CASE){
-    INTERRUPT_CASE = FALSE;
-    RegisterHolderLocal = RegisterHolderBKUP;
-    RegisterHolderBKUP = 0;     
-  }
   
   task_HP_index = 255;  // Ponemos un valor invalido
   task_HP_priority = 0; // Ponemos la prioridad mas baja
@@ -201,33 +193,11 @@ void task_scheduler(void){
   if(task_HP_index > TASK_COUNTER){ 
     ACTIVE_TASK_ID=TASK_LIMIT;
     EnableInterrupts;
-    /*if(RegisterHolderLocal){
-       RegisterHolder = RegisterHolderLocal;
-      _asm{
-         TSX  
-         LEAX 5,X
-         STX RegisterHolderLocal  
-         LDS RegisterHolderLocal
-         LDX RegisterHolder
-         JMP 0,X
-      }
-    }     //*/
     return;
   }
   
   // Pos corrale mijo que va tarde  
   run_task(task_HP_index); 
- /* if(RegisterHolderLocal){
-     RegisterHolder = RegisterHolderLocal;
-    _asm{
-       TSX  
-       LEAX 5,X
-       STX RegisterHolderLocal  
-       LDS RegisterHolderLocal
-       LDX RegisterHolder
-       JMP 0,X
-    }
-  }  //*/
 }
                   
 void run_task(uint8_t task_id){

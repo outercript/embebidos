@@ -42,11 +42,11 @@ enum{
 #define TICK_TIME     (2000)
 
 /* GLOBALS */
-extern volatile short PRE;
+//extern volatile short PRE;
 extern uint8_t ACTIVE_TASK_ID;
 extern volatile uint8_t ISR_FLAG;
 extern uint16_t *RegisterHolder;
-extern uint16_t *RegisterHolderBKUP;
+//extern uint16_t *RegisterHolderBKUP;
 extern uint16_t **sp_value;
 
 extern volatile uint8_t  ALARM_COUNTER;
@@ -55,7 +55,7 @@ extern volatile Bool     TASK_ACTIVATED;
 extern volatile Task Task_list[TASK_LIMIT];
 extern volatile Alarm Alarm_list[TASK_LIMIT];
 
-extern volatile Bool INTERRUPT_CASE;
+//extern volatile Bool INTERRUPT_CASE;
 
 void add_task(_fptr funct, uint8_t args);
 void add_alarm(_fptr funct, uint8_t delay, uint16_t period);
