@@ -3,7 +3,7 @@
 
 void PWM_0(void){
   PORTA_PA0 = (PWM0 <= 0);
-  PWM0 = PWM0 >= 3 ? 0 : PWM0 + 1; 
+  PWM0 = PWM0 >= 3 ? 0 : PWM0 + 1;
   terminate_task(); 
 }
 

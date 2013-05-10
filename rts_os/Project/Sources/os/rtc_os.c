@@ -6,6 +6,8 @@ void OSInit(void){
     
     TIM_TIE_C0I = TRUE; 
     TIM_TC0     = TIM_TCNT + TICK_TIME;
+    
+    PC_STACK_SIZE = 0;
     EnableInterrupts;  
 }
 
@@ -35,6 +37,7 @@ void init_alarms(void){
    ALARM_COUNTER = 0;
 }
 
+
 void add_task(_fptr funct, uint8_t args){
   
   // Prevent adding more tasks than we can allocate
@@ -56,7 +59,7 @@ void add_task(_fptr funct, uint8_t args){
 
 void add_alarm(_fptr ptask, uint8_t delay, uint16_t period){
      uint8_t index;
-     
+     //DisableInterrupts;
      if(ALARM_COUNTER >= TASK_LIMIT)
         return;
      
@@ -69,7 +72,13 @@ void add_alarm(_fptr ptask, uint8_t delay, uint16_t period){
             break;
         }  
      }
+     //EnableInterrupts;
 }
+
+
+//////////////////////////////////////////////////////////
+//                    ACTIVATE TASKS                    //
+//////////////////////////////////////////////////////////
   
 
 void activate_task(_fptr ptask){
@@ -117,9 +126,149 @@ void activate_task(_fptr ptask){
   task_scheduler();
 }
 
+//////////////////////////////////////////////////////////
+//                    TASK SCHEDULER                    //
+//////////////////////////////////////////////////////////
+
+void task_scheduler(void){ 
+  uint8_t index;
+  uint8_t task_HP_index;  
+  uint8_t task_HP_priority;
+  DisableInterrupts;
+  
+  task_HP_index = 255;  // Ponemos un valor invalido
+  task_HP_priority = 0; // Ponemos la prioridad mas baja
+
+  // Obtener la tarea con la prioridad  mas alta
+  for(index = 0; index < TASK_COUNTER; index++){
+        if(Task_list[index].status == TASK_READY && 
+          (Task_list[index].priority >= task_HP_priority)){
+            task_HP_index = index;
+            task_HP_priority = Task_list[index].priority;    
+          }
+  }
+
+  
+  // Verificar que es un valor valido
+  if(task_HP_index > TASK_COUNTER){ 
+    ACTIVE_TASK_ID=TASK_LIMIT;
+    EnableInterrupts;
+    return;
+  }
+  
+  // Pos corrale mijo que va tarde  
+  run_task(task_HP_index); 
+}
+
+  
+//////////////////////////////////////////////////////////
+//                    RUN TASK                          //
+//////////////////////////////////////////////////////////  
+                  
+void run_task(uint8_t task_id){
+      Task_list[task_id].status = TASK_RUNNING;
+      ACTIVE_TASK_ID = task_id;
+       
+      if(Task_list[task_id].pc_continue){
+         RegisterHolder = Task_list[task_id].sp_continue;
+         // Despues de esto perderemos nuestras variables locales
+         _asm{
+            LDS RegisterHolder                 ; Regresa el SP al lugar en que se
+                                               ; econtraba dentro del task
+         }
+         // Carga el PC en el registro que utiliza jumper para saltar
+         JMP_REG = Task_list[ACTIVE_TASK_ID].pc_continue;
+         Task_list[ACTIVE_TASK_ID].pc_continue = 0;
+         jumper();
+      } 
+      else{
+          // Manda a llamar el inicio de la funcion
+          _asm{
+            TSX                 ; Obtener el SP en X
+            LEAX -3,X           ; Ajusta el valor al SP inicial de la funcion
+            STX RegisterHolder  ; Transfierelo a la variable temporal
+          }
+          // Guarda el SP inicial de la funcion a llamar
+          Task_list[task_id].sp_start = RegisterHolder;
+          EnableInterrupts;
+          (*Task_list[task_id].pc_start)();
+          DisableInterrupts;
+      }
+      DisableInterrupts;
+      Task_list[ACTIVE_TASK_ID].sp_start = 0;
+      ACTIVE_TASK_ID = TASK_LIMIT;
+      task_scheduler();
+      DisableInterrupts;
+}
+
+
+//////////////////////////////////////////////////////////
+//                    DESTROY TASKS                     //
+//////////////////////////////////////////////////////////
+
+void chain_task(_fptr ptask){
+  uint8_t index;
+  DisableInterrupts;
+  
+  // Terminate Task
+  Task_list[ACTIVE_TASK_ID].status = TASK_IDLE;
+  Task_list[ACTIVE_TASK_ID].pc_continue = 0;
+  Task_list[ACTIVE_TASK_ID].sp_continue = 0;
+  RegisterHolder = Task_list[ACTIVE_TASK_ID].sp_start; 
+  ACTIVE_TASK_ID=TASK_LIMIT;
+  
+  //Active The task to chain
+  for(index = 0; index < TASK_COUNTER; index++){
+  
+      // Buscamos la tarea en la lista de tareas... U don't say!
+      if(Task_list[index].pc_start  == ptask){ 
+         Task_list[index].status = TASK_READY;
+         break;
+      }
+  } 
+
+  _asm{
+    LDS RegisterHolder          ; Mueve el SP al inicio de la funcion
+    RTC                         ; Vamos al siguente valor del stack
+  }  
+}
+
+void terminate_task(void){
+  DisableInterrupts;
+  Task_list[ACTIVE_TASK_ID].status = TASK_IDLE;
+  Task_list[ACTIVE_TASK_ID].pc_continue = 0;
+  Task_list[ACTIVE_TASK_ID].sp_continue = 0;
+  RegisterHolder = Task_list[ACTIVE_TASK_ID].sp_start; 
+  ACTIVE_TASK_ID=TASK_LIMIT;
+  
+  _asm{
+    LDS RegisterHolder          ; Mueve el SP al inicio de la funcion
+    RTC                         ; Vamos al siguente valor del stack
+  }
+}
+
+//////////////////////////////////////////////////////////
+//                    UTILS                             //
+//////////////////////////////////////////////////////////
+
+void jumper(void){
+  _asm{
+    TSX
+    LEAX 1,X
+    STX RegisterHolder
+  }
+  *RegisterHolder = (uint16_t)JMP_REG;
+  EnableInterrupts;
+}
+
+
+//////////////////////////////////////////////////////////
+//                    ISR FUNCTIONS                     //
+//////////////////////////////////////////////////////////
 
 void activate_task_isr(_fptr ptask){
   uint8_t index;
+  DisableInterrupts;
   
   if(ACTIVE_TASK_ID < TASK_LIMIT){
 
@@ -170,7 +319,9 @@ void activate_task_isr(_fptr ptask){
 }
 
 
-void task_scheduler(void){ 
+/********* ISR SCHEDULER  **********/
+
+void task_scheduler_isr(void){ 
   uint8_t index;
   uint8_t task_HP_index;  
   uint8_t task_HP_priority;
@@ -192,91 +343,16 @@ void task_scheduler(void){
   // Verificar que es un valor valido
   if(task_HP_index > TASK_COUNTER){ 
     ACTIVE_TASK_ID=TASK_LIMIT;
-    EnableInterrupts;
-    return;
+    _asm LEAS 5, SP;
+    JMP_REG = PC_STACK[PC_STACK_SIZE-1];
+    PC_STACK_SIZE -= 1;
+    jumper();
   }
   
   // Pos corrale mijo que va tarde  
-  run_task(task_HP_index); 
-}
-                  
-void run_task(uint8_t task_id){
-      Task_list[task_id].status = TASK_RUNNING;
-      ACTIVE_TASK_ID = task_id;
-       
-      if(Task_list[task_id].pc_continue){
-         RegisterHolder = Task_list[task_id].sp_continue;
-         // Despues de esto perderemos nuestras variables locales
-         _asm{
-            LDS RegisterHolder                 ; Regresa el SP al lugar en que se
-                                               ; econtraba dentro del task
-         }
-         // Solo usar globales
-         RegisterHolder = Task_list[ACTIVE_TASK_ID].pc_continue;
-         Task_list[ACTIVE_TASK_ID].pc_continue = 0;
-         EnableInterrupts;
-         
-         _asm{
-            LDX RegisterHolder    ; Carga en X el PC del task donde debe regresar
-            JMP 0,X               ; Salta al PC del TASK
-         }
-      } 
-      else{
-          // Manda a llamar el inicio de la funcion
-          _asm{
-            TSX                 ; Obtener el SP en X
-            LEAX -3,X           ; Ajusta el valor al SP inicial de la funcion
-            STX RegisterHolder  ; Transfierelo a la variable temporal
-          }
-          // Guarda el SP inicial de la funcion a llamar
-          Task_list[task_id].sp_start = RegisterHolder;
-          EnableInterrupts;
-          (*Task_list[task_id].pc_start)();
-          DisableInterrupts;
-      }
-      
-      Task_list[ACTIVE_TASK_ID].sp_start = 0;
-      ACTIVE_TASK_ID = TASK_LIMIT;
-      task_scheduler();
-}
-
-void chain_task(_fptr ptask){
-  uint8_t index;
-  DisableInterrupts;
-  
-  // Terminate Task
-  Task_list[ACTIVE_TASK_ID].status = TASK_IDLE;
-  Task_list[ACTIVE_TASK_ID].pc_continue = 0;
-  Task_list[ACTIVE_TASK_ID].sp_continue = 0;
-  RegisterHolder = Task_list[ACTIVE_TASK_ID].sp_start; 
-  ACTIVE_TASK_ID=TASK_LIMIT;
-  
-  //Active The task to chain
-  for(index = 0; index < TASK_COUNTER; index++){
-  
-      // Buscamos la tarea en la lista de tareas... U don't say!
-      if(Task_list[index].pc_start  == ptask){ 
-         Task_list[index].status = TASK_READY;
-         break;
-      }
-  } 
-
-  _asm{
-    LDS RegisterHolder          ; Mueve el SP al inicio de la funcion
-    RTC                         ; Vamos al siguente valor del stack
-  }  
-}
-
-void terminate_task(void){
-  DisableInterrupts;
-  Task_list[ACTIVE_TASK_ID].status = TASK_IDLE;
-  Task_list[ACTIVE_TASK_ID].pc_continue = 0;
-  Task_list[ACTIVE_TASK_ID].sp_continue = 0;
-  RegisterHolder = Task_list[ACTIVE_TASK_ID].sp_start; 
-  ACTIVE_TASK_ID=TASK_LIMIT;
-  
-  _asm{
-    LDS RegisterHolder          ; Mueve el SP al inicio de la funcion
-    RTC                         ; Vamos al siguente valor del stack
-  }
+  run_task(task_HP_index);
+  _asm LEAS 5, SP;
+  JMP_REG = PC_STACK[PC_STACK_SIZE-1];
+  PC_STACK_SIZE -= 1;
+  jumper(); 
 }

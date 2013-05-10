@@ -13,6 +13,7 @@
 #pragma CODE_SEG __NEAR_SEG NON_BANKED
 interrupt VectorNumber_Vportp void PortP_ISR(void){
   PIFP_PIFP0 = 1; 
+  activate_task_isr(PWM_4);
 }
 
 interrupt VectorNumber_Vtimch0 void Timer_alarm(void){
@@ -43,15 +44,12 @@ interrupt VectorNumber_Vtimch0 void Timer_alarm(void){
           Alarm_list[index].delay = Alarm_list[index].period;
         }
         
-        //FIXME: while the HACK is DISABLED
-        if( Alarm_list[index].task_id != ACTIVE_TASK_ID){
-          Task_list[Alarm_list[index].task_id].status = TASK_READY;
-          TASK_ACTIVATED = TRUE;
-        }
+        Task_list[Alarm_list[index].task_id].status = TASK_READY;
+        TASK_ACTIVATED = TRUE;
       }
     }//end for
   
-    /* FIXME:        HACK CODE DISABLED!!!!!!!
+    //* FIXME:        HACK CODE DISABLED!!!!!!!
     _asm{
       TSX                     ; Guarda el SP en X
       LEAX 9,X                ; Compensa el espacio de las variables
@@ -61,15 +59,20 @@ interrupt VectorNumber_Vtimch0 void Timer_alarm(void){
       STX sp_value            ; Guardamos el SP en la variable
 
     }  
+    
     //Obtenemos la direccion del PC y apuntamos a ella
     if(ACTIVE_TASK_ID < TASK_LIMIT && TASK_ACTIVATED)
       Task_list[ACTIVE_TASK_ID].pc_continue = *sp_value;
     
     
     if(TASK_ACTIVATED){
-      //INTERRUPT_CASE = TRUE;
-      //RegisterHolderBKUP = RegisterHolder;
-      //*RegisterHolder = (uint16_t)((uint32_t)task_scheduler >> 8) ;
+      if(PC_STACK_SIZE < (TASK_LIMIT*2)){
+        PC_STACK[PC_STACK_SIZE] = *sp_value;
+        PC_STACK_SIZE += 1;
+        *RegisterHolder = (uint16_t)((uint32_t)task_scheduler_isr >> 8) ;
+      }
+      else
+        _asm NOP;
       
     }
     
@@ -128,23 +131,28 @@ void main(void) {
     TimerInit();
     OSInit();
     
-    add_task(PWM_0, 5);
-    add_task(PWM_1, 4);
-    add_task(PWM_2, 3);
-    add_task(PWM_3, 1);
+    add_task(PWM_0, 1);
+    //*
+    add_task(PWM_1, 1);
+    add_task(PWM_2, 1);
     add_task(PWM_4, 1);
+    add_task(PWM_3, 1);
     add_task(PWM_5, 1);
+    //*/
+    //*
     
     add_alarm(PWM_0, 2, 5); // 1 prendido, 3 apagados 50Hz  %25
+    //*
     add_alarm(PWM_1, 1, 1); // 1 prendido, 3 apagados 250Hz %25
-    add_alarm(PWM_2, 1, 1); // 17 prendidos, apagado 40Hz %70
+    /*add_alarm(PWM_2, 1, 1); // 17 prendidos, apagado 40Hz %70
     add_alarm(PWM_3, 2, 5); // 1 prendido, 4 apagados 40Hz %20
     add_alarm(PWM_4, 2, 1); // 9 prendidos, 1 apagado 100Hz %20
     add_alarm(PWM_5, 2, 4); // 2 prendidos, 3 apagado 50Hz %40
-
+    //*/
+    
+    task_scheduler();
     for(;;) {
       _asm NOP; //Because I can!
-      task_scheduler();
 
     } /* loop forever */
   
