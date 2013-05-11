@@ -25,7 +25,7 @@ typedef struct{
 
 typedef struct{
   uint8_t   delay;
-  uint16_t   period;
+  uint8_t   period;
   uint8_t   task_id;
 }Alarm;
 
@@ -53,18 +53,17 @@ extern volatile uint8_t  ALARM_COUNTER;
 extern volatile uint8_t  TASK_COUNTER;
 extern volatile Bool     TASK_ACTIVATED;
 extern volatile Task Task_list[TASK_LIMIT];
-extern volatile Alarm Alarm_list[TASK_LIMIT];
+extern Alarm Alarm_list[TASK_LIMIT];
 
 //extern volatile Bool INTERRUPT_CASE;
-
+void OSInit(void);
 void add_task(_fptr funct, uint8_t args);
-void add_alarm(_fptr funct, uint8_t delay, uint16_t period);
+void add_alarm(_fptr funct, uint8_t delay, uint8_t period);
 void task_scheduler(void);
 void task_scheduler_isr(void);
 void init_tasks(void);
 void init_alarms(void);
 void jumper(void);
-void jumper_isr(void);
 void activate_task(_fptr ptask);
 void activate_task_isr(_fptr ptask);
 void terminate_task(void);

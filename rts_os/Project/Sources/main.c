@@ -28,15 +28,11 @@ interrupt VectorNumber_Vtimch0 void Timer_alarm(void){
     //Code to activate Alarm Tasks.
     TASK_ACTIVATED = FALSE;
     for(index=0; index < ALARM_COUNTER; index++){
-
-      //Check the task to be run
+    
       if(Alarm_list[index].delay > 0)
         Alarm_list[index].delay--;
 
-      else
-        continue;
-
-      // Activate Task
+      //Check the task to be run
       if(Alarm_list[index].delay == 0){
 
         //Is one shot alarm? 
@@ -46,7 +42,8 @@ interrupt VectorNumber_Vtimch0 void Timer_alarm(void){
         
         Task_list[Alarm_list[index].task_id].status = TASK_READY;
         TASK_ACTIVATED = TRUE;
-      }
+      } 
+    
     }//end for
   
     //* FIXME:        HACK CODE DISABLED!!!!!!!
@@ -132,23 +129,18 @@ void main(void) {
     OSInit();
     
     add_task(PWM_0, 1);
-    //*
-    add_task(PWM_1, 1);
+    add_task(PWM_1, 3);
     add_task(PWM_2, 1);
-    add_task(PWM_4, 1);
     add_task(PWM_3, 1);
+    add_task(PWM_4, 1);
     add_task(PWM_5, 1);
-    //*/
-    //*
-    
-    add_alarm(PWM_0, 2, 5); // 1 prendido, 3 apagados 50Hz  %25
-    //*
+ 
+    add_alarm(PWM_0, 0, 5); // 1 prendido, 3 apagados 50Hz  %25
     add_alarm(PWM_1, 1, 1); // 1 prendido, 3 apagados 250Hz %25
-    /*add_alarm(PWM_2, 1, 1); // 17 prendidos, apagado 40Hz %70
-    add_alarm(PWM_3, 2, 5); // 1 prendido, 4 apagados 40Hz %20
-    add_alarm(PWM_4, 2, 1); // 9 prendidos, 1 apagado 100Hz %20
-    add_alarm(PWM_5, 2, 4); // 2 prendidos, 3 apagado 50Hz %40
-    //*/
+    add_alarm(PWM_2, 2, 1); // 17 prendidos, apagado 40Hz %70
+    add_alarm(PWM_3, 3, 5); // 1 prendido, 4 apagados 40Hz %20
+    //add_alarm(PWM_4, 4, 1); // 9 prendidos, 1 apagado 100Hz %90
+    //add_alarm(PWM_5, 2, 4); // 2 prendidos, 3 apagado 50Hz %40
     
     task_scheduler();
     for(;;) {

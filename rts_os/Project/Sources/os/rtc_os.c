@@ -8,7 +8,7 @@ void OSInit(void){
     TIM_TC0     = TIM_TCNT + TICK_TIME;
     
     PC_STACK_SIZE = 0;
-    EnableInterrupts;  
+    //EnableInterrupts;  
 }
 
 void init_tasks(void){
@@ -57,7 +57,7 @@ void add_task(_fptr funct, uint8_t args){
   TASK_COUNTER++;
 }
 
-void add_alarm(_fptr ptask, uint8_t delay, uint16_t period){
+void add_alarm(_fptr ptask, uint8_t delay, uint8_t period){
      uint8_t index;
      //DisableInterrupts;
      if(ALARM_COUNTER >= TASK_LIMIT)
@@ -195,7 +195,7 @@ void run_task(uint8_t task_id){
           DisableInterrupts;
       }
       DisableInterrupts;
-      Task_list[ACTIVE_TASK_ID].sp_start = 0;
+      //Task_list[ACTIVE_TASK_ID].sp_start = 0;
       ACTIVE_TASK_ID = TASK_LIMIT;
       task_scheduler();
       DisableInterrupts;
