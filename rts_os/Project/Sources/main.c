@@ -110,6 +110,19 @@ void PeriphInit(void){
 }
 
 
+void PLLInit(void){
+    CLKSEL &= 0x7F;
+    
+    SYNR = 0x01;
+    REFDV = 0;
+    
+    PLLCTL |= 0x40;
+    
+    while(!(CRGFLG & 0x08));
+    
+    CLKSEL = 0x80;
+}
+
 void TimerInit(void){
 
     // Enable Timer
@@ -117,7 +130,7 @@ void TimerInit(void){
 
 
     TIM_TSCR2_PR0 = 0;
-    TIM_TSCR2_PR1 = 0;
+    TIM_TSCR2_PR1 = 1;
     TIM_TSCR2_PR2 = 0;
     TIM_PACTL  = 0x00; // Setup Timer Preset
 
@@ -128,6 +141,7 @@ void TimerInit(void){
 
 void main(void) {
 
+    PLLInit();
     PeriphInit();
     TimerInit();
     OSInit();
@@ -144,7 +158,7 @@ void main(void) {
     add_alarm(PWM_2, 3, 1); // 17 prendidos, apagado 40Hz %70
     add_alarm(PWM_3, 2, 5); // 1 prendido, 4 apagados 40Hz %20
     add_alarm(PWM_4, 4, 1); // 9 prendidos, 1 apagado 100Hz %90
-    //add_alarm(PWM_5, 5, 5); // 2 prendidos, 3 apagado 50Hz %40
+    add_alarm(PWM_5, 5, 5); // 2 prendidos, 3 apagado 50Hz %40
 
     task_scheduler();
     for(;;) {

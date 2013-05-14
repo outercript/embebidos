@@ -8,8 +8,8 @@ void PWM_0(void){
 }
 
 void PWM_1(void){
-  PORTA_PA1 = (PWM1 <= 0);
-  PWM1 = PWM1 >= 3 ? 0 : PWM1 + 1;
+  PORTA_PA1 = (PWM1 <= 1);
+  PWM1 = PWM1 >= 6 ? 0 : PWM1 + 1;
   terminate_task();
 }
 
